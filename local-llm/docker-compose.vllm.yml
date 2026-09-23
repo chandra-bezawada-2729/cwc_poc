@@ -1,0 +1,56 @@
+# Learning setup: the guide's fallback engine (vLLM) on the laptop.
+# Same OpenAI-compatible API and the same API key as the llama.cpp setup.
+#
+# Sized for an 8 GB RTX 4060, so it uses Qwen3.5-4B (AWQ 4-bit, ~5.7 GB) - the
+# 9B does not fit vLLM in 8 GB because vLLM keeps everything on the GPU.
+# Production uses Qwen3.8-27B on a much larger card (see the on-prem guide).
+#
+#   stop llama.cpp first : docker compose down
+#   start               : docker compose -f docker-compose.vllm.yml up -d
+#   logs                : docker compose -f docker-compose.vllm.yml logs -f
+#   stop                : docker compose -f docker-compose.vllm.yml down
+#
+# First start downloads ~6 GB of weights plus a large image; allow 10-20 minutes.
+
+services:
+  vllm:
+    image: vllm/vllm-openai:v0.28.0        # the version the guide pins
+    container_name: cwc-vllm
+    restart: "no"                          # learning setup: start it on purpose
+    ports:
+      - "127.0.0.1:8000:8000"
+    shm_size: 8g
+    environment:
+      VLLM_NO_USAGE_STATS: "1"             # no telemetry (guide, HIPAA section)
+      DO_NOT_TRACK: "1"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    command:
+      - "--model"
+      - "QuantTrio/Qwen3.5-4B-AWQ"
+      - "--served-model-name"
+      - "qwen3.5-4b"
+      - "--api-key"
+      - "${LLM_API_KEY:?Run new-api-key.ps1 first}"
+      - "--max-model-len"
+      - "${VLLM_CONTEXT:-24576}"           # one fax needs ~10-20K tokens
+      - "--gpu-memory-utilization"
+      - "${VLLM_GPU_UTIL:-0.88}"
+      - "--max-num-seqs"
+      - "1"                                # one fax at a time on 8 GB
+      - "--enforce-eager"                  # skip CUDA graphs: saves memory (guide does the same on 1x 5090)
+      - "--reasoning-parser"
+      - "qwen3"
+      - "--limit-mm-per-prompt"
+      - '{"image": 5}'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  hf-cache:
+    name: local-llm_hf-cache               # shared with the SGLang setup

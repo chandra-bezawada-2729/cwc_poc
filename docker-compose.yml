@@ -1,0 +1,146 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CWC fax classification - full stack in Docker (see DOCKER.md)
+#
+#   web ──► backend ──► ai ──► llm        + db (PostgreSQL)
+#
+# Only "web" is published, and only on this machine (127.0.0.1). Everything else
+# sits on the "internal" network, which has NO route out: no telemetry, no
+# accidental calls to a cloud AI, and the LLM is unreachable from outside.
+#
+# Fax folders: one shared volume, mounted at /data in BOTH backend and ai. The
+# backend hands the AI service an absolute file path, so the path must be
+# identical in both containers.
+#
+# Secrets come from the root .env (gitignored): CWC_DB_PASSWORD, LLM_API_KEY.
+#   start : docker compose up -d --build
+#   status: docker compose ps
+#   logs  : docker compose logs -f backend ai llm
+#   stop  : docker compose down            (data and model cache are kept)
+# ─────────────────────────────────────────────────────────────────────────────
+name: cwc
+
+x-internal-only: &internal-only
+  networks: [internal]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }   # logs may contain PHI; keep them bounded
+
+services:
+
+  db:
+    <<: *internal-only
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: cwc
+      POSTGRES_USER: cwc
+      POSTGRES_PASSWORD: ${CWC_DB_PASSWORD:?Set CWC_DB_PASSWORD in the root .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cwc -d cwc"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  llm:
+    <<: *internal-only
+    # Laptop (8 GB GPU): llama.cpp + Qwen3.5-9B. On a GPU server this service is
+    # swapped for SGLang/vLLM; nothing else in this file changes except the URL/model.
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    volumes:
+      # Re-uses the weights already downloaded by local-llm/docker-compose.yml,
+      # because the internal network cannot reach Hugging Face.
+      - qwen-models:/models:ro
+    command:
+      - "-m"
+      - "${LLM_MODEL_FILE:-/models/models--unsloth--Qwen3.5-9B-GGUF/snapshots/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q4_K_M.gguf}"
+      - "--mmproj"
+      - "${LLM_MMPROJ_FILE:-/models/models--unsloth--Qwen3.5-9B-GGUF/snapshots/3885219b6810b007914f3a7950a8d1b469d598a5/mmproj-BF16.gguf}"
+      - "--alias"
+      - "${LLM_ALIAS:-qwen3.5-9b}"
+      - "--api-key"
+      - "${LLM_API_KEY:?Set LLM_API_KEY in the root .env}"
+      - "--jinja"
+      - "-c"
+      - "${LLM_CONTEXT:-32768}"
+      - "-ngl"
+      - "${LLM_GPU_LAYERS:-99}"
+      - "--parallel"
+      - "1"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 180s
+
+  ai:
+    <<: *internal-only
+    build: ./cwc-ai-service
+    environment:
+      LLM_PROVIDER: openai
+      OPENAI_BASE_URL: http://llm:8080/v1
+      OPENAI_API_KEY: ${LLM_API_KEY}
+      OPENAI_MODEL: ${LLM_ALIAS:-qwen3.5-9b}
+      ANTHROPIC_API_KEY: ""
+      CWC_MAX_RENDER_PAGES: "3"
+      CWC_LLM_TIMEOUT_SECS: "600"
+      CWC_DEBUG_LOG_OCR_TEXT: "false"
+    volumes:
+      - ${CWC_DATA_DIR:-C:/CWC_DOCKER}:/data:ro     # reads faxes only
+      - ai-logs:/app/logs                           # usage ledger + service log
+    depends_on:
+      llm: { condition: service_healthy }
+
+  backend:
+    <<: *internal-only
+    build: ./cwc-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/cwc
+      DB_USERNAME: cwc
+      DB_PASSWORD: ${CWC_DB_PASSWORD}
+      AI_SERVICE_URL: http://ai:5002
+      STORAGE_BASE: /data
+      CWC_STORAGE_ROUTEDDIR: Outbound               # = cwc.storage.routed-dir
+      INBOUND_ENABLED: "true"
+      INBOUND_PATH: /data/Inbound
+      CWC_ROUTING_MODE: ${CWC_ROUTING_MODE:-AUTO}
+      CORS_ORIGINS: http://localhost:${WEB_PORT:-8088}
+    volumes:
+      - ${CWC_DATA_DIR:-C:/CWC_DOCKER}:/data        # Inbound, incoming, Outbound
+    depends_on:
+      db: { condition: service_healthy }
+      ai: { condition: service_healthy }
+
+  web:
+    <<: *internal-only
+    build: ./cwc-frontend
+    networks: [internal, edge]                      # edge only so the port can be published
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8088}:80"            # this machine only; a proxy/TLS goes in front on a server
+    depends_on:
+      backend: { condition: service_healthy }
+
+networks:
+  internal:
+    internal: true        # no route to the internet or the host
+  edge: {}
+
+volumes:
+  db-data:
+  ai-logs:
+  qwen-models:
+    external: true
+    name: local-llm_qwen-models

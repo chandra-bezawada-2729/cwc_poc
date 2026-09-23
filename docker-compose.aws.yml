@@ -1,0 +1,36 @@
+# Overrides for running the stack on a Linux GPU VM (AWS EC2 g6.xlarge / g6.2xlarge).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d
+#
+# Differences from the laptop file:
+#   - fax folders live at /srv/cwc-data (set CWC_DATA_DIR in .env)
+#   - the web interface is published on all interfaces, so the security group
+#     (not the loopback address) decides who can reach it
+#   - the model file is a plain path in the qwen-models volume, downloaded by
+#     the step in DEPLOY_AWS_VM.md, because the internal network has no route out
+services:
+  web:
+    ports: !override
+      - "${WEB_PORT:-8088}:80"
+
+  llm:
+    command:
+      - "-m"
+      - "${LLM_MODEL_FILE:-/models/Qwen3.5-9B-Q4_K_M.gguf}"
+      - "--mmproj"
+      - "${LLM_MMPROJ_FILE:-/models/mmproj-BF16.gguf}"
+      - "--alias"
+      - "${LLM_ALIAS:-qwen3.5-9b}"
+      - "--api-key"
+      - "${LLM_API_KEY:?Set LLM_API_KEY in .env}"
+      - "--jinja"
+      - "-c"
+      - "${LLM_CONTEXT:-65536}"       # the L4's 24 GB allows more context than the laptop
+      - "-ngl"
+      - "99"
+      - "--parallel"
+      - "${LLM_PARALLEL:-2}"          # two faxes at a time
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"

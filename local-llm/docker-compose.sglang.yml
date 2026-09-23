@@ -1,0 +1,44 @@
+# Learning setup: the guide's primary engine (SGLang) on the laptop.
+# Same model, key and API as the vLLM file; port 30000 like the guide.
+#
+#   stop the others first : docker compose down ; docker compose -f docker-compose.vllm.yml down
+#   start                 : docker compose -f docker-compose.sglang.yml up -d
+#   logs                  : docker compose -f docker-compose.sglang.yml logs -f
+#
+# SGLang is less tested on WSL2/Docker Desktop than vLLM. If it fails to start,
+# note the error: that is part of what this exercise is for.
+
+services:
+  sglang:
+    image: lmsysorg/sglang:latest          # pin the exact tag once it works
+    container_name: cwc-sglang
+    restart: "no"
+    ports:
+      - "127.0.0.1:30000:30000"
+    shm_size: 8g
+    environment:
+      DO_NOT_TRACK: "1"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    command: >
+      python3 -m sglang.launch_server
+      --model-path QuantTrio/Qwen3.5-4B-AWQ
+      --served-model-name qwen3.5-4b
+      --api-key ${LLM_API_KEY:?Run new-api-key.ps1 first}
+      --context-length ${SGLANG_CONTEXT:-24576}
+      --mem-fraction-static ${SGLANG_MEM:-0.80}
+      --max-running-requests 1
+      --disable-cuda-graph
+      --reasoning-parser qwen3
+      --host 0.0.0.0 --port 30000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  hf-cache:
+    name: local-llm_hf-cache               # share the downloaded weights with the vLLM setup

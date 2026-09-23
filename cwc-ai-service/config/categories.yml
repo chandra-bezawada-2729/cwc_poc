@@ -1,0 +1,472 @@
+# CWC Healthcare Fax — Document Category Taxonomy
+# ─────────────────────────────────────────────────────────────────────────────
+# TAXONOMY VERSION: 2.0 (folder-aligned)
+#
+# v1.0 was inferred from 5 payer/pharmacy faxes. v2.0 is derived from CWC's OWN
+# outbound folder tree ("Sample for Avenir Digital"), which is the real ground
+# truth for how CWC files a fax today. Every top-level category below maps 1:1
+# onto a folder CWC actually maintains.
+#
+# The v1.0 codes (PRIOR_AUTHORIZATION, PHARMACY_REQUEST, MEDICATION_REVIEW,
+# PAYER_CARE_GAP, FOLLOW_UP) were NOT deleted — CWC files all of those documents
+# into Miscellaneous, so they survive as subtypes of MISCELLANEOUS. The
+# disambiguation traps built for them still work; only the destination changed.
+#
+# Adding a category requires editing this file AND the Java enum DocumentCategory.
+# Pipeline code must never contain category string literals.
+#
+# ── Naming ───────────────────────────────────────────────────────────────────
+# Each category carries a `naming` block used to build the suggested filename:
+#   primary_template   — CWC / Avenir house style: Title Case With Spaces
+#                        e.g. "Allergy Consult", "MRI Ankle", "Medical Clearance"
+#   alternate_template — specification_doctype style, lowercase snake
+#                        e.g. "allergy_consult", "cardiology_followup"
+# Placeholders: {specification} and {doctype}.
+#   {specification} comes from the model (a short noun phrase — specialty,
+#                   modality + body part, procedure, or form name).
+#   {doctype}       comes from the matched subtype's `slug`, falling back to the
+#                   category's `slug`.
+# ─────────────────────────────────────────────────────────────────────────────
+
+taxonomy_version: "2.0"
+
+categories:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: CONSULTATION_REPORT
+    label: Consultation Report
+    folder: Consultation Reports
+    slug: consult
+    description: >
+      A note or letter from a consulting/specialist provider back to the referring
+      or primary provider, summarising an office visit or consultation for a named
+      patient. Almost always addressed "Dear Dr. ..." and signed by the consultant.
+      It reports on a CLINICIAN ENCOUNTER, not on a test or an imaging study.
+    subtypes:
+      - SPECIALTY_CONSULT_NOTE
+      - OFFICE_VISIT_NOTE
+      - FOLLOW_UP_CONSULT_NOTE
+      - REFERRAL_REQUEST
+      - PRE_OP_CONSULT
+    subtype_slugs:
+      SPECIALTY_CONSULT_NOTE: consult
+      OFFICE_VISIT_NOTE: officevisit
+      FOLLOW_UP_CONSULT_NOTE: followup
+      REFERRAL_REQUEST: referral
+      PRE_OP_CONSULT: preopconsult
+    evidence_signals:
+      - '"Dear Dr." salutation and a "Thank you for allowing me to participate / see your patient" closing'
+      - Chief Complaint / Reason for Visit / History of Present Illness / Assessment / Plan headings
+      - '"CONSULTING PROVIDER" and "REFERRING PROVIDER" fields'
+      - specialist letterhead (Endocrinology, Hematology Oncology, Urology, Ophthalmology, GI, Surgery)
+      - '"OFFICE VISIT REPORT" or "Consultation letter to ..."'
+    naming:
+      primary_template: "{specification} Consult"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        The clinical SPECIALTY of the consulting provider, in one or two words.
+      specification_vocabulary:
+        - Allergy
+        - Cardiology
+        - Dermatology
+        - Endocrine
+        - Gastroenterology
+        - Hematology Oncology
+        - Nephrology
+        - Neurology
+        - Ophthalmology
+        - Orthopedics
+        - Pulmonology
+        - Rheumatology
+        - Surgery
+        - Breast Clinic
+        - Urology
+        - Podiatry
+        - Pain Management
+        - Internal Medicine
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: LAB_REPORT
+    label: Lab Report
+    folder: Lab Reports
+    slug: labreport
+    description: >
+      Laboratory or pathology results for a named patient — clinical chemistry and
+      haematology panels with values and reference ranges, surgical/GI pathology
+      reports with a FINAL DIAGNOSIS, microbiology cultures and susceptibilities,
+      cytology. Characterised by measured values or a pathologist's diagnosis.
+    subtypes:
+      - PATHOLOGY_REPORT
+      - CLINICAL_LAB_RESULT
+      - MICROBIOLOGY_REPORT
+      - CYTOLOGY_REPORT
+    subtype_slugs:
+      PATHOLOGY_REPORT: pathology
+      CLINICAL_LAB_RESULT: labresult
+      MICROBIOLOGY_REPORT: microbiology
+      CYTOLOGY_REPORT: cytology
+    evidence_signals:
+      - '"Test Name / Result / Reference Range / Units" columns'
+      - '"FINAL DIAGNOSIS:" with specimen letters (A. / B. / C.)'
+      - '"GASTROINTESTINAL PATHOLOGY REPORT", "GROSS DESCRIPTION", "Accession #"'
+      - '"Date Collected / Date Received / Date Reported"'
+      - laboratory letterhead (BioReference, Northwell Health Laboratories, PathGenix, NewPath)
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        The specimen, panel or procedure the lab report covers. Use "<Procedure>
+        Pathology" for a pathology report on a procedure specimen; use the panel
+        name for clinical labs; use "Lab Result" if nothing more specific is legible.
+      specification_vocabulary:
+        - Colonoscopy Pathology
+        - EGD Pathology
+        - Biopsy Pathology
+        - Lab Result
+        - CBC
+        - Occult Blood
+        - Blood Culture
+        - Urinalysis
+        - Cytology
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: RADIOLOGY_REPORT
+    label: Radiology Report
+    folder: Radiology Reports
+    slug: radiologyreport
+    description: >
+      A radiologist's interpretation of an imaging study for a named patient —
+      X-ray, ultrasound, CT, MRI, mammography, nuclear medicine. Contains an EXAM
+      or PROCEDURE name, TECHNIQUE, FINDINGS and an IMPRESSION, and is signed by a
+      radiologist. Contains NEW results — a reminder ABOUT a prior study is not this.
+    subtypes:
+      - XRAY_REPORT
+      - ULTRASOUND_REPORT
+      - CT_REPORT
+      - MRI_REPORT
+      - MAMMOGRAPHY_REPORT
+      - NUCLEAR_MEDICINE_REPORT
+    subtype_slugs:
+      XRAY_REPORT: radiologyreport
+      ULTRASOUND_REPORT: radiologyreport
+      CT_REPORT: radiologyreport
+      MRI_REPORT: radiologyreport
+      MAMMOGRAPHY_REPORT: radiologyreport
+      NUCLEAR_MEDICINE_REPORT: radiologyreport
+    evidence_signals:
+      - '"EXAM:" / "PROCEDURE" followed by TECHNIQUE, COMPARISON, FINDINGS, IMPRESSION'
+      - '"ELECTRONICALLY SIGNED" by a radiologist with a read date'
+      - imaging-centre letterhead (Lenox Hill Radiology, Main Street Radiology, RadNet, Rendr Medical Imaging, CP Advanced Imaging)
+      - CPT imaging codes (73721, 76857, 76872) or an Accession #
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        Modality plus body part, following CWC's house style: ultrasound is "US
+        <Body Part>" (US Abdomen, US Pelvis, US Breast); MRI is "MRI <Body Part>";
+        CT is "CT <Body Part>"; plain film is "<Body Part> X-ray" for chest and
+        "X-ray <Body Part>" otherwise; mammography is "Mammo Report"; obstetric
+        ultrasound is "Prenatal US".
+      specification_vocabulary:
+        - Chest X-ray
+        - X-ray LS Spine
+        - MRI Ankle
+        - MRI Brain
+        - CT Abdomen
+        - CT Chest
+        - US Abdomen
+        - US Pelvis
+        - US Breast
+        - US Bladder
+        - US Thyroid
+        - Prenatal US
+        - Mammo Report
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: PROCEDURE_REPORT
+    label: Procedure Report
+    folder: Procedure Reports
+    slug: procedurereport
+    description: >
+      An operator's report of a performed procedure — endoscopy, colonoscopy, EGD,
+      bronchoscopy, cardiac catheterisation, a surgical operative note. Contains
+      INDICATION, CONSENT, INSTRUMENT, ANESTHESIA, the procedure narrative and
+      findings. Distinct from a RADIOLOGY_REPORT (an image interpretation) and from
+      a LAB_REPORT (a specimen diagnosis from the same procedure).
+    subtypes:
+      - COLONOSCOPY_REPORT
+      - EGD_REPORT
+      - ENDOSCOPY_REPORT
+      - SURGICAL_PROCEDURE_REPORT
+      - CARDIAC_PROCEDURE_REPORT
+    subtype_slugs:
+      COLONOSCOPY_REPORT: procedurereport
+      EGD_REPORT: procedurereport
+      ENDOSCOPY_REPORT: procedurereport
+      SURGICAL_PROCEDURE_REPORT: opnote
+      CARDIAC_PROCEDURE_REPORT: procedurereport
+    evidence_signals:
+      - '"COLONOSCOPY REPORT" / "EGD Report" / "OPERATIVE REPORT" title'
+      - INDICATION, CONSENT, PREPARATION, INSTRUMENT, ANESTHESIA, PROCEDURE headings
+      - endoscopist / anaesthesia provider / nursing staff listed, scope serial number
+      - intra-procedure time markers (Scope Inserted / Scope Withdrawn)
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        The procedure performed. CWC writes "Colonoscopy" bare and "EGD Report"
+        with the noun; follow the vocabulary below.
+      specification_vocabulary:
+        - Colonoscopy
+        - EGD Report
+        - Endoscopy Report
+        - Bronchoscopy
+        - Cardiac Cath
+        - Operative Report
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: HOSPITAL_RECORD
+    label: Hospital Record
+    folder: Hospital Records
+    slug: hospitalrecord
+    description: >
+      A record generated by a hospital or emergency department about an inpatient
+      stay or ED visit — continuity-of-care / summary-of-care documents, discharge
+      summaries, ED records. Typically opens "This document is designed to
+      facilitate the continuity of patient care between organizations" and carries
+      Encounter Diagnoses, a Problem List, Current Medications and results in bulk.
+    subtypes:
+      - ER_RECORD
+      - DISCHARGE_SUMMARY
+      - SUMMARY_OF_CARE
+      - ADMISSION_RECORD
+      - TRANSFER_OF_CARE
+    subtype_slugs:
+      ER_RECORD: errecord
+      DISCHARGE_SUMMARY: dischargesummary
+      SUMMARY_OF_CARE: hospitalrecord
+      ADMISSION_RECORD: hospitalrecord
+      TRANSFER_OF_CARE: hospitalrecord
+    evidence_signals:
+      - '"This document is designed to facilitate the continuity of patient care between organizations"'
+      - '"Summary of Care Document", "Encounter Diagnoses", "Problem List", "Flowsheet Rows"'
+      - 'an admission marker "(Adm: ...)" or an ED department code'
+      - hospital-system letterhead (NewYork-Presbyterian, Northwell, Columbia, Lower Manhattan Hospital)
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        "ER Record" when the encounter is an emergency-department visit,
+        "Hospital Record" for an inpatient or general summary-of-care document.
+      specification_vocabulary:
+        - ER Record
+        - Hospital Record
+        - Discharge Summary
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: HOMECARE
+    label: Homecare
+    folder: Homecare
+    slug: homecare
+    description: >
+      An INFORMATIONAL report from a home-care or certified home-health agency
+      about a patient already under service — discharge/transfer summaries,
+      progress notes, visit reports. Marked "For Review" rather than
+      "Please Sign and Return". A home-care document that must be SIGNED and faxed
+      back is a FORM, not this (see disambiguation rule 2).
+    subtypes:
+      - HOMECARE_DISCHARGE_TRANSFER_SUMMARY
+      - HOMECARE_PROGRESS_NOTE
+      - HOMECARE_VISIT_REPORT
+      - HOMECARE_RECERTIFICATION_SUMMARY
+    subtype_slugs:
+      HOMECARE_DISCHARGE_TRANSFER_SUMMARY: homecare
+      HOMECARE_PROGRESS_NOTE: homecare
+      HOMECARE_VISIT_REPORT: homecare
+      HOMECARE_RECERTIFICATION_SUMMARY: homecare
+    evidence_signals:
+      - home-health-agency letterhead (Royal Care, Cassena Care at Home, Extended Home Care, VNS)
+      - '"Discharge-Transfer Summary Report", "Episode Start Date / Episode End Date"'
+      - 'a checked "For Review" box and no signature request'
+      - Case Manager, Branch Code, Episode Status fields
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        The kind of home-care report. Default to "HomeCare Report" when nothing
+        more specific is legible.
+      specification_vocabulary:
+        - HomeCare Report
+        - HomeCare Discharge Summary
+        - HomeCare Progress Note
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: FORM
+    label: Form
+    folder: Forms
+    slug: form
+    description: >
+      A blank or partially completed form the PROVIDER must fill in, sign and fax
+      back. The defining signal is an outstanding action on the provider, not the
+      sender and not the clinical subject. Includes home-health plans of care
+      (CMS-485) awaiting signature, pre-operative medical clearance forms, FMLA and
+      disability certifications, DOH/CDPAS forms, DME certificates of medical
+      necessity, and school/early-intervention health forms.
+    subtypes:
+      - HOME_HEALTH_PLAN_OF_CARE
+      - MEDICAL_CLEARANCE_FORM
+      - FMLA_CERTIFICATION
+      - CDPAS_DOH_FORM
+      - DME_SUPPLY_CMN
+      - EARLY_INTERVENTION_FORM
+      - DISABILITY_FORM
+      - GENERIC_FAX_BACK_FORM
+    subtype_slugs:
+      HOME_HEALTH_PLAN_OF_CARE: homecareform
+      MEDICAL_CLEARANCE_FORM: clearance
+      FMLA_CERTIFICATION: fmla
+      CDPAS_DOH_FORM: cdpas
+      DME_SUPPLY_CMN: supplyform
+      EARLY_INTERVENTION_FORM: eiform
+      DISABILITY_FORM: disabilityform
+      GENERIC_FAX_BACK_FORM: form
+    evidence_signals:
+      - '"Please sign, date and return", "please fax back", "PLEASE SIGN ALL PAGES"'
+      - '"HOME HEALTH CERTIFICATION AND PLAN OF CARE" with an unsigned physician block'
+      - '"PREOPERATIVE MEDICAL RISK ASSESSMENT FORM", "please fax back clearance"'
+      - '"Certification of Health Care Provider" (FMLA / Department of Labor)'
+      - 'empty checkbox grids, blank signature and date lines, "COMPLETE ALL BOXES BELOW"'
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        The name of the form as printed on it, in CWC's house style. Note CWC
+        writes some with the word "Form" and some without — follow the vocabulary.
+      specification_vocabulary:
+        - Home Care Form
+        - Medical Clearance
+        - FMLA Form
+        - CDPAS Form
+        - Medical Supply Form
+        - Early Intervention Form
+        - Disability Form
+        - School Health Form
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: ROI_CONSENT
+    label: ROI Consent Form
+    folder: ROI Consent Form
+    slug: roiconsent
+    description: >
+      A request or authorisation to RELEASE / DISCLOSE a patient's records to a
+      third party — HIPAA authorisation forms, requests to copy PHI, attending
+      physician statement requests, and records requests from disability agencies,
+      life insurers and records-retrieval vendors. The subject is the RECORDS
+      THEMSELVES, not the patient's clinical care.
+    subtypes:
+      - HIPAA_AUTHORIZATION
+      - REQUEST_TO_COPY_PHI
+      - RECORDS_REQUEST
+      - ATTENDING_PHYSICIAN_STATEMENT
+      - DISABILITY_RECORDS_REQUEST
+      - LIFE_INSURANCE_RECORDS_REQUEST
+    subtype_slugs:
+      HIPAA_AUTHORIZATION: roiconsent
+      REQUEST_TO_COPY_PHI: roiconsent
+      RECORDS_REQUEST: recordsrequest
+      ATTENDING_PHYSICIAN_STATEMENT: apsrequest
+      DISABILITY_RECORDS_REQUEST: recordsrequest
+      LIFE_INSURANCE_RECORDS_REQUEST: recordsrequest
+    evidence_signals:
+      - '"AUTHORIZATION FOR RELEASE OF HEALTH INFORMATION PURSUANT TO HIPAA", OCA Official Form No. 960'
+      - '"REQUEST TO COPY PHI", "Attending Physician Statement Request"'
+      - '"RELEASE Medical Information TO:" / "Medical Information REQUESTED FROM:"'
+      - a records-retrieval or disability-determination sender (eNoah, Parameds, PDC Retrievals, NYS OTDA Division of Disability Determinations)
+      - '"we need medical evidence from treatment sources", "please provide all records for the last N years"'
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        What the release covers. CWC has no established naming here (the folder
+        holds "Sample 1..6"), so use a descriptive noun phrase.
+      specification_vocabulary:
+        - ROI Consent
+        - HIPAA Authorization
+        - Records Request
+        - Disability Records Request
+        - Life Insurance Records Request
+        - Attending Physician Statement
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: MISCELLANEOUS
+    label: Miscellaneous
+    folder: Miscellaneous
+    slug: misc
+    description: >
+      Payer, pharmacy and plan administrative correspondence, and any other legible
+      healthcare fax that fits none of the categories above. This is where CWC files
+      prior-authorisation chases, pharmacy prescription requests, medication reviews,
+      payer care-gap and quality-measure notices, insurance letters and service
+      plans. Reserve it for correspondence — never use it for a clinical result or a
+      form awaiting signature.
+    subtypes:
+      - PRIOR_AUTHORIZATION
+      - PHARMACY_REQUEST
+      - MEDICATION_REVIEW
+      - PAYER_CARE_GAP
+      - INSURANCE_LETTER
+      - SERVICE_PLAN
+      - FOLLOW_UP_REMINDER
+      - MARKETING
+      - GENERAL_CORRESPONDENCE
+      - ADMINISTRATIVE_NOTICE
+    subtype_slugs:
+      PRIOR_AUTHORIZATION: priorauth
+      PHARMACY_REQUEST: pharmacyrequest
+      MEDICATION_REVIEW: medreview
+      PAYER_CARE_GAP: caregap
+      INSURANCE_LETTER: insuranceletter
+      SERVICE_PLAN: serviceplan
+      FOLLOW_UP_REMINDER: followup
+      MARKETING: misc
+      GENERAL_CORRESPONDENCE: misc
+      ADMINISTRATIVE_NOTICE: misc
+    evidence_signals:
+      - health-plan or PBM letterhead (Healthfirst, Anthem, VNS Health, CoverMyMeds, OptumRx)
+      - '"prior authorization", "ePA", a PA key, "patient is waiting for their medication"'
+      - '"based on claims data", HEDIS / STARS quality measure language'
+      - '"Medication Therapy Management", "polypharmacy", "candidates for discontinuation"'
+      - '"Patient Centered Service Plan", "Dear Provider" plan letters'
+      - '"please send an eRX", authorize/deny medication checkboxes'
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: >
+        A short noun phrase naming the correspondence, following CWC's examples.
+      specification_vocabulary:
+        - Prescription Authorization
+        - Prescription Request
+        - Insurance Letter
+        - Person-Centered Service Plan
+        - Care Gap Notice
+        - Medication Review
+        - Prior Authorization Follow Up
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  - code: UNKNOWN
+    label: Unknown
+    folder: Manual-Review
+    slug: unknown
+    description: >
+      The document could not be read or understood — blank pages, unusable scan
+      quality, corrupt file, or the model genuinely cannot tell. NEVER assign
+      UNKNOWN merely because confidence is low; low confidence on a real category
+      is handled by the confidence gate, which is a separate mechanism. A legible
+      fax that fits nothing above is MISCELLANEOUS, not UNKNOWN.
+    subtypes: []
+    naming:
+      primary_template: "{specification}"
+      alternate_template: "{specification}_{doctype}"
+      specification_hint: "Use \"Unreadable Fax\"."
+      specification_vocabulary:
+        - Unreadable Fax

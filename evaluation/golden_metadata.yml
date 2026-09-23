@@ -1,0 +1,184 @@
+# CWC Healthcare Fax — Golden Metadata Labels for Phase 9 Field-Level Evaluation
+#
+# REVIEW STATUS: labels marked "review: true" need human verification against
+# the actual PDF before being used for definitive scoring.
+#
+# Field values use dot-path notation: core.X or categoryData.X
+# List fields: value is a list; matching is order-insensitive subset check.
+# Fuzzy fields: set fuzzy: true; string similarity >= 0.8 counts as a match.
+# null expected: the extractor must return null (not a non-null value).
+# omit (no entry): field is not scored for this sample.
+#
+# Confidently-wrong threshold: confidence >= 0.85 AND value does not match label.
+
+samples:
+
+  # ────────────────────────────────────────────────────────────
+  - file: "(603)935-9108_2026-08-18_0945PM.pdf"
+    category: PHARMACY_REQUEST
+    tracking_id_hint: "look for senderFax containing 5128845981"
+    fields:
+      core.patientName:
+        value: "Khoa Tran"
+        note: >
+          Cover-letter prose: "Confirm Amazon Pharmacy Home Delivery is listed as
+          Khoa Tran's default pharmacy in your system." Form NAME field is blank.
+      core.senderOrganization:
+        value: "Amazon Pharmacy"
+      core.senderFax:
+        value: "(512) 884-5981"
+        note: "Labeled Fax in letterhead and form"
+      core.documentDate:
+        value: null
+        note: "No body date visible; should return null (backend uses filename received_at)"
+        review: true
+      categoryData.ncpdpId:
+        value: "5919177"
+        note: "Printed as 'Escribe (NCPDP): 5919177'"
+      categoryData.pharmacyName:
+        value: "Amazon Pharmacy Home Delivery"
+        fuzzy: true
+      categoryData.pharmacyFax:
+        value: "(512) 884-5981"
+      categoryData.pharmacyPhone:
+        value: "(855) 206-3605"
+      categoryData.requestedMedication.name:
+        value: "COZAAR"
+        fuzzy: true
+        note: "Drug label reads COZAAR (losartan)"
+      categoryData.requestedMedication.strength:
+        value: "50 MG"
+      categoryData.requestedMedication.form:
+        value: "TAB"
+
+  # ────────────────────────────────────────────────────────────
+  - file: "(360)200-5103_2026-08-19_0137AM.pdf"
+    category: MEDICATION_REVIEW
+    tracking_id_hint: "look for senderCallbackFax containing 7133441418"
+    fields:
+      core.senderOrganization:
+        value: "RxAdvocate"
+      core.senderFax:
+        value: "(713) 344-1418"
+        note: "Labeled 'From Fax #:' in sender table"
+      core.documentDate:
+        value: null
+        note: >
+          No body date observed; banner date (2026-08-19) is unreliable per §16.8.
+          Model should return null with body-first rule; backend uses filename timestamp.
+        review: true
+      categoryData.reviewProgram:
+        value: "Polypharmacy Medication Communication"
+        fuzzy: true
+        review: true
+      categoryData.referenceNumber:
+        value: "01742575-005-1185"
+      categoryData.medicationsForReview:
+        value: ["LEVOTHYROXINE SODIUM", "SAVELLA"]
+        fuzzy: true
+        note: "Polypharmacy review; both drugs listed as subjects of the review"
+      core.prescriberName:
+        value: "Y-UYEN NGUYEN"
+        fuzzy: true
+        review: true
+
+  # ────────────────────────────────────────────────────────────
+  - file: "(614)321-2042_2026-08-18_1004PM.pdf"
+    category: PRIOR_AUTHORIZATION
+    fields:
+      core.senderOrganization:
+        value: "CoverMyMeds"
+      categoryData.paKey:
+        value: "BCW6FY4R"
+        note: "Labeled 'Key:' on the PA notification"
+      categoryData.platform:
+        value: "CoverMyMeds"
+      categoryData.requestedMedication:
+        value: "Oyster Shell Calcium"
+        fuzzy: true
+        note: "Full label: 'Oyster Shell Calcium w/D 500-5MG-MCG Tablets'"
+      core.patientName:
+        value: null
+        note: "Patient name not present on this cover fax; form field blank"
+        review: true
+
+  # ────────────────────────────────────────────────────────────
+  - file: "(305)503-8807_2026-08-19_0702AM.pdf"
+    category: FOLLOW_UP
+    fields:
+      core.senderOrganization:
+        value: "Main Street Radiology"
+        fuzzy: true
+      core.responseFax:
+        value: "718-428-2475"
+        note: "Return fax for ordering provider"
+      core.prescriberName:
+        value: "TAI YIN HSIEH"
+        fuzzy: true
+      core.documentDate:
+        value: null
+        note: "Body letter date needed; review required"
+        review: true
+      categoryData.priorStudy:
+        value: "US ABDOMEN"
+        fuzzy: true
+      categoryData.priorStudyDate:
+        value: "2025-08-04"
+        note: "Prior study date printed in body"
+      categoryData.recommendedStudy:
+        value: "US (Abdomen)"
+        fuzzy: true
+      categoryData.recommendedDueDate:
+        value: "2026-08-04"
+      core.patientName:
+        value: null
+        note: "Patient name appears to be absent; review required"
+        review: true
+
+  # ────────────────────────────────────────────────────────────
+  - file: "(212)497-8948_2026-08-18_0943PM.pdf"
+    category: PAYER_CARE_GAP
+    fields:
+      core.senderOrganization:
+        value: "Healthfirst"
+      core.responseFax:
+        value: "1-646-677-3387"
+      core.responseDeadline:
+        value: "2026-09-01"
+        note: "01SEP2026 printed in fax body"
+      core.documentDate:
+        value: null
+        note: "Body date (if present) preferred; banner unreliable"
+        review: true
+      categoryData.planName:
+        value: "Healthfirst"
+      categoryData.measureName:
+        value: "Statin Therapy for Patients with Diabetes"
+        fuzzy: true
+      categoryData.measureType:
+        value: "HEDIS"
+      categoryData.exclusionCodes:
+        value:
+          - "R73.03"
+          - "M62.82"
+          - "G72.0"
+          - "G72.2"
+          - "G72.9"
+          - "E28.2"
+          - "K70.30"
+          - "K70.31"
+          - "K71.7"
+          - "K74.3"
+          - "K74.4"
+          - "K74.5"
+          - "K74.6"
+          - "K74.69"
+          - "K78.81"
+          - "N18.5"
+          - "N18.6"
+          - "Z99.2"
+        note: "ICD-10 exclusion codes printed in table; all must be in extracted list"
+      core.patientName:
+        value: null
+        note: "Member name field blank; check if name appears in cover letter body"
+        review: true

@@ -1,0 +1,699 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CBWCHC Fax — design tokens
+   ───────────────────────────────────────────────────────────────────────────
+   Dark is the base palette and light is the alternate, not the other way
+   round. That ordering matters: a light-first design dimmed down produces grey
+   text on grey panels, because the contrast ratios were chosen against white.
+   Built dark-first, each surface is a deliberate step in an elevation ladder
+   and the accent is picked to sit on near-black.
+
+   Semantic colour (ok / warn / crit) stays separate from the accent. The accent
+   says "interactive"; green says "this fax is filed". If they were the same hue
+   a routed row would read as a button.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* Elevation ladder. Each step is a real surface, not a tint of the last. */
+  --ground:      #070C0F;
+  --surface:     #0E1519;
+  --surface-2:   #131D22;
+  --surface-3:   #1B262C;
+
+  --ink:         #E9F1F3;
+  --ink-2:       #9DB1B8;
+  --ink-3:       #6D838B;
+
+  --line:        #1F2D34;
+  --line-soft:   #18242A;
+  /* A one-pixel top highlight is what separates a raised panel from a painted
+     rectangle on a dark ground. Cheap, and it does most of the work. */
+  --lift:        inset 0 1px 0 rgba(255, 255, 255, .045);
+
+  --accent:      #4CC9C4;
+  --accent-2:    #7BDDD9;
+  --accent-soft: #0D2B2A;
+  --accent-line: #2A6E6B;
+  --accent-glow: rgba(76, 201, 196, .16);
+
+  --ok:          #4FC98A;  --ok-soft:   #0C2A1C;
+  --warn:        #E0A85C;  --warn-soft: #2C2013;
+  --crit:        #F2796D;  --crit-soft: #2E1614;
+  --info:        #6FB0E6;  --info-soft: #0F2431;
+
+  --chrome:      #050A0C;
+  --chrome-2:    #101B20;
+  --chrome-ink:  #C3D4D9;
+  --chrome-ink-2:#6F868E;
+
+  --cat-consultation-report: #6FB0E6;
+  --cat-lab-report:          #4FC98A;
+  --cat-radiology-report:    #A096E8;
+  --cat-procedure-report:    #4CC9C4;
+  --cat-hospital-record:     #E08BA8;
+  --cat-homecare:            #E8BC66;
+  --cat-form:                #E0A85C;
+  --cat-roi-consent:         #F2796D;
+  --cat-miscellaneous:       #92A5AB;
+  --cat-unknown:             #92A5AB;
+
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, .5);
+  --shadow:      0 2px 4px rgba(0, 0, 0, .45), 0 12px 32px -18px rgba(0, 0, 0, .9);
+  --shadow-hover:0 4px 10px rgba(0, 0, 0, .5), 0 18px 44px -20px rgba(0, 0, 0, .95);
+
+  --radius:    12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+
+  --font-ui:   "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, Menlo, monospace;
+
+  --sidebar-width: 212px;
+
+  /* One easing and one duration for every hover in the app, so the whole
+     interface responds with the same hand. */
+  --ease:  cubic-bezier(.2, .7, .3, 1);
+  --fast:  .16s;
+  --slow:  .26s;
+}
+
+/* ── Light, as the alternate ────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --ground:      #F1F5F6;
+  --surface:     #FFFFFF;
+  --surface-2:   #F7FAFA;
+  --surface-3:   #EDF2F3;
+
+  --ink:         #0C1A20;
+  --ink-2:       #485A61;
+  --ink-3:       #7A8C92;
+
+  --line:        #D9E2E4;
+  --line-soft:   #E8EEEF;
+  --lift:        inset 0 1px 0 rgba(255, 255, 255, .8);
+
+  --accent:      #0E7C7B;
+  --accent-2:    #0A605F;
+  --accent-soft: #E2F1F0;
+  --accent-line: #9CCFCD;
+  --accent-glow: rgba(14, 124, 123, .12);
+
+  --ok:          #17794C;  --ok-soft:   #E3F3EA;
+  --warn:        #9C5A06;  --warn-soft: #FBF0DC;
+  --crit:        #B42318;  --crit-soft: #FBE9E7;
+  --info:        #2A6FB0;  --info-soft: #E6F0F9;
+
+  --chrome:      #0B1A20;
+  --chrome-2:    #132A32;
+  --chrome-ink:  #CBD9DD;
+  --chrome-ink-2:#7E959C;
+
+  --cat-consultation-report: #2A6FB0;
+  --cat-lab-report:          #17794C;
+  --cat-radiology-report:    #5D55A8;
+  --cat-procedure-report:    #0E7C7B;
+  --cat-hospital-record:     #A8486A;
+  --cat-homecare:            #B07407;
+  --cat-form:                #9C5A06;
+  --cat-roi-consent:         #B42318;
+  --cat-miscellaneous:       #69797F;
+  --cat-unknown:             #69797F;
+
+  --shadow-sm:   0 1px 2px rgba(12, 26, 32, .05);
+  --shadow:      0 1px 2px rgba(12, 26, 32, .05), 0 8px 28px -14px rgba(12, 26, 32, .22);
+  --shadow-hover:0 2px 6px rgba(12, 26, 32, .08), 0 16px 40px -18px rgba(12, 26, 32, .34);
+}
+
+/* ═══ Interaction ═══════════════════════════════════════════════════════════
+   One hover behaviour, defined once.
+
+   Scale is kept small on purpose. Past about 1.02 the browser resamples text
+   and it goes soft, which on a page of fax numbers and ICD-10 codes reads as a
+   rendering fault rather than a flourish. The lift comes mostly from the border
+   brightening and the shadow deepening; the scale is the smallest part of it.
+
+   Every hover surface also raises z-index, or a scaled row would slide under
+   the one below it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lift {
+  transition:
+    transform var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    background var(--fast) var(--ease);
+  will-change: transform;
+}
+.lift:hover,
+.lift:focus-within {
+  transform: scale(1.012);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-hover), 0 0 0 1px var(--accent-glow);
+  z-index: 2;
+}
+
+/* Small boxes need a touch more scale to register at all. */
+.lift-sm {
+  transition:
+    transform var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    background var(--fast) var(--ease);
+  will-change: transform;
+}
+.lift-sm:hover,
+.lift-sm:focus-within {
+  transform: scale(1.022);
+  border-color: var(--accent-line);
+  background: var(--surface-3);
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift, .lift-sm { transition: border-color var(--fast) linear; will-change: auto; }
+  .lift:hover, .lift:focus-within,
+  .lift-sm:hover, .lift-sm:focus-within { transform: none; }
+}
+
+/* ── Primitives ─────────────────────────────────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mono { font-family: var(--font-mono); }
+.num  { font-variant-numeric: tabular-nums; }
+.em-dash { color: var(--ink-3); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm), var(--lift);
+}
+.card + .card { margin-top: 14px; }
+
+.card-label {
+  margin: 0 0 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-label .qualifier {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--ink-3);
+  background: var(--surface-3);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 3px 7px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-3);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.band {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+.band-high { background: var(--ok-soft);   color: var(--ok); }
+.band-med  { background: var(--warn-soft); color: var(--warn); }
+.band-low  { background: var(--crit-soft); color: var(--crit); }
+
+.btn {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color var(--fast) var(--ease), color var(--fast) var(--ease),
+              background var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  color: var(--ink);
+  background: var(--surface-3);
+  transform: translateY(-1px);
+}
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #04211F; font-weight: 600; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); color: #04211F; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.btn:focus-visible, a:focus-visible, button:focus-visible,
+select:focus-visible, input:focus-visible, textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Field box — a labelled container for one value ─────────────────────── */
+/* Every term on the detail page sits in its own box, so a value and its label
+   travel together instead of relying on a shared row baseline. */
+.fieldgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 8px;
+}
+.field {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 8px 10px;
+  min-width: 0;
+}
+.field-wide { grid-column: 1 / -1; }
+/* The four priority fields carry more weight than the rest of the grid, so the
+   box is drawn rather than implied and the value is set a step larger. */
+.field-priority { background: var(--surface-3); border-color: var(--line); }
+.field-priority .field-value { font-size: 13.5px; font-weight: 500; }
+.field-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.field-value {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* ── Confidence meter ───────────────────────────────────────────────────── */
+.meter { display: inline-flex; align-items: center; gap: 8px; }
+.meter-track {
+  width: 44px; height: 5px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+  flex: none;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+.meter-track > i {
+  display: block; height: 100%; border-radius: 99px;
+  background: var(--ok);
+  transition: width var(--slow) var(--ease);
+}
+.meter-track.is-med > i { background: var(--warn); }
+.meter-track.is-low > i { background: var(--crit); }
+.meter-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.meter-lg .meter-track { width: 96px; height: 7px; }
+.meter-lg .meter-value { font-size: 15px; font-weight: 600; color: var(--ink); }
+
+/* ── Provenance glyph ───────────────────────────────────────────────────── */
+.glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 15px; height: 15px;
+  border-radius: 4px;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  background: var(--surface-3);
+  color: var(--ink-3);
+  cursor: help;
+}
+.glyph-doc { background: var(--accent-soft); color: var(--accent); }
+
+/* ── Category tag ───────────────────────────────────────────────────────── */
+.cat-tag {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; font-weight: 600;
+  letter-spacing: -.005em;
+  color: var(--ink);
+}
+.cat-tag > i {
+  width: 8px; height: 8px;
+  border-radius: 2px; flex: none;
+  background: var(--cat-unknown);
+  box-shadow: 0 0 10px -1px currentColor;
+}
+.cat-sub { margin-top: 3px; font-size: 11px; color: var(--ink-3); }
+
+/* ── Watcher pill ───────────────────────────────────────────────────────── */
+.watcher {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 8px 14px;
+  border-radius: 99px;
+  font-size: 12px; font-weight: 500;
+  max-width: 100%;
+  background: var(--ok-soft);
+  border: 1px solid color-mix(in srgb, var(--ok) 26%, transparent);
+  color: var(--ok);
+  box-shadow: var(--lift);
+}
+.watcher-idle { background: var(--surface-2); border-color: var(--line); color: var(--ink-3); }
+.watcher-off  { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--warn); }
+.watcher .path {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.watcher .sep { color: var(--ink-3); opacity: .6; }
+.watcher .pulse {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; flex: none;
+  box-shadow: 0 0 0 0 currentColor;
+  animation: watcher-pulse 2.4s ease-out infinite;
+}
+@keyframes watcher-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent); }
+  70%  { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .watcher .pulse { animation: none; } }
+
+/* ── Pipeline strip ─────────────────────────────────────────────────────── */
+.strip {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--lift);
+}
+.pipe { flex: 1 1 280px; min-width: 230px; }
+.pipe-bar {
+  display: flex; gap: 2px;
+  height: 8px; border-radius: 99px;
+  overflow: hidden;
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+.pipe-bar > i { display: block; border-radius: 99px; transition: width var(--slow) var(--ease); }
+.pipe-key { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.pipe-key > span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.pipe-key b {
+  font-family: var(--font-mono); font-weight: 600;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.pipe-key .is-zero, .pipe-key .is-zero b { color: var(--ink-3); }
+.key-dot { width: 7px; height: 7px; border-radius: 2px; flex: none; }
+
+.stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat-box {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 8px 14px;
+  min-width: 92px;
+}
+.stat-k {
+  font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.stat-v {
+  font-size: 18px; font-weight: 600; margin-top: 3px;
+  letter-spacing: -.015em; font-variant-numeric: tabular-nums;
+}
+
+/* ── Review alert ───────────────────────────────────────────────────────── */
+/* Held documents are the only thing on the Inbox that does not resolve itself,
+   so this is the one element allowed to use the critical colour. */
+.review-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--crit) 42%, transparent);
+  border-left: 3px solid var(--crit);
+  border-radius: var(--radius);
+  background: var(--crit-soft);
+  color: var(--crit);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm), var(--lift);
+}
+.review-alert-icon { display: grid; place-items: center; flex: none; }
+.review-alert-text { font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.review-alert-text b {
+  font-weight: 700;
+  color: var(--crit);
+  font-variant-numeric: tabular-nums;
+}
+.review-alert-cta {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--crit);
+  white-space: nowrap;
+}
+
+/* ── Slim intake strip ──────────────────────────────────────────────────── */
+.intake {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 12.5px; color: var(--ink-3);
+  cursor: pointer; user-select: none;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.intake:hover, .intake.is-dragging { border-color: var(--accent); background: var(--accent-soft); }
+.intake b { color: var(--ink-2); font-weight: 500; }
+.intake .cta { color: var(--accent); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+
+/* ═══ Worklist — rows as cards, not table rows ══════════════════════════════
+   A <table> cannot be given rounded, individually-shadowed rows, and transform
+   on a <tr> is unreliable across browsers. A grid list gives each fax its own
+   box while keeping the columns aligned down the page.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--lift);
+  overflow: hidden;
+}
+.sheet-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sheet-head h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.legend {
+  margin-left: auto; display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 11px; color: var(--ink-3);
+}
+.legend > span { display: flex; align-items: center; gap: 5px; }
+
+.sheet-scroll { overflow-x: auto; }
+/* Room for a scaled row to grow into without being clipped by the card edge. */
+.wl { min-width: 1060px; padding: 10px 12px 12px; }
+
+.wl-cols {
+  display: grid;
+  /* Document · Sender · Receiver fax · Type · Confidence · Filed to · Arrived · open */
+  grid-template-columns:
+    minmax(180px, 1.3fr) minmax(158px, 1.1fr) 124px minmax(124px, .9fr)
+    104px minmax(132px, .95fr) 80px 64px;
+  gap: 13px;
+  align-items: start;
+}
+.wl-head {
+  /* Matches the row's left padding, or the headers sit 4px off their columns. */
+  padding: 4px 14px 10px 18px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.wl-head > span { white-space: nowrap; }
+
+.wl-row {
+  position: relative;
+  padding: 13px 14px 13px 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  margin-bottom: 8px;
+}
+.wl-row:last-child { margin-bottom: 0; }
+/* The sheet clips its own overflow to keep the rounded header, so a wide blur
+   would be visibly sliced at the card edge. Rows get a tighter shadow that
+   stays inside it. */
+.wl-row.lift:hover, .wl-row.lift:focus-within {
+  background: var(--surface-3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .35), 0 0 0 1px var(--accent-glow);
+}
+.wl-row::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 10px; bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--line);
+}
+.wl-row.row-ok::before   { background: var(--ok);   box-shadow: 0 0 12px -1px var(--ok); }
+.wl-row.row-warn::before { background: var(--warn); box-shadow: 0 0 12px -1px var(--warn); }
+.wl-row.row-crit::before { background: var(--crit); box-shadow: 0 0 12px -1px var(--crit); }
+.wl-row.row-busy::before { background: var(--info); box-shadow: 0 0 12px -1px var(--info); }
+
+.fname {
+  font-family: var(--font-mono);
+  font-size: 12.5px; font-weight: 500;
+  color: var(--ink);
+  display: block;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.forig {
+  display: flex; align-items: center; gap: 5px; margin-top: 4px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+  overflow: hidden;
+}
+.forig > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.org { font-size: 13px; font-weight: 500; line-height: 1.3; display: flex; align-items: center; gap: 6px; }
+.org > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.faxline { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11.5px; color: var(--ink-2); }
+.toline { margin-top: 3px; font-size: 11px; color: var(--ink-3); font-family: var(--font-mono); }
+.recvfax { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2); }
+
+.folder-cell { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink); }
+.folder-cell svg { flex: none; color: var(--ink-3); }
+
+.when { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+
+.rowlink {
+  font-size: 12px; font-weight: 500;
+  color: var(--accent); text-decoration: none; white-space: nowrap;
+  opacity: 0; transition: opacity var(--fast) var(--ease);
+}
+.wl-row:hover .rowlink, .wl-row:focus-within .rowlink { opacity: 1; }
+@media (hover: none) { .rowlink { opacity: 1; } }
+
+/* ── Evidence quotes ────────────────────────────────────────────────────── */
+.quotes { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.quotes li {
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-2);
+  padding: 9px 11px;
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+}
+.quotes-naming li { border-left-color: var(--accent); }
+.quotes-note {
+  margin-top: 11px; font-size: 11.5px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── Misc ───────────────────────────────────────────────────────────────── */
+.pip {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 1px 5px; border-radius: 4px; margin-left: 6px;
+  white-space: nowrap;
+  background: var(--ok-soft); color: var(--ok);
+}
+.pip-med { background: var(--warn-soft); color: var(--warn); }
+.pip-low { background: var(--crit-soft); color: var(--crit); }
+
+.rule-label {
+  display: flex; align-items: center; gap: 9px;
+  margin: 18px 0 10px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3);
+}
+.rule-label::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; line-clamp: 3;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.linkbtn {
+  background: none; border: 0; padding: 4px 0 0;
+  font: inherit; font-size: 11.5px;
+  color: var(--accent); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
+.renamebox {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.renamebox .from {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--ink-3); text-decoration: line-through; overflow-wrap: anywhere;
+}
+.renamebox .to {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--accent); overflow-wrap: anywhere;
+}
+.renamebox .alt { font-size: 11px; color: var(--ink-3); overflow-wrap: anywhere; }
+
+.callout {
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.callout h4 { margin: 0 0 5px; font-size: 12px; font-weight: 600; letter-spacing: .01em; }
+.callout p  { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+.callout-warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.callout-warn h4 { color: var(--warn); }
+.callout-crit { background: var(--crit-soft); border-color: color-mix(in srgb, var(--crit) 30%, transparent); }
+.callout-crit h4 { color: var(--crit); }
+.callout-ok   { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 28%, transparent); }
+.callout-ok h4 { color: var(--ok); }
+
+/* Form controls inherit the theme rather than the browser's default chrome. */
+select, input[type="text"], input[type="search"], input[type="date"], textarea {
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 8px 10px;
+}
+select:hover, input:hover, textarea:hover { border-color: var(--accent-line); }

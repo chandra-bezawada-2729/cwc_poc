@@ -1,0 +1,106 @@
+# CWC Healthcare Fax — Routing configuration
+# ─────────────────────────────────────────────────────────────────────────────
+# ROUTING CONFIG VERSION: 2.0 — aligned to CWC's real outbound folder tree.
+#
+# The folder names below are taken VERBATIM from "Sample for Avenir Digital",
+# the outbound tree CWC produced by hand. Spaces and capitalisation are theirs
+# ("ROI Consent Form", not "ROI-Consent-Forms") so that a routed file lands in
+# the folder CWC already has, not a new one beside it.
+#
+# v1.0 folders (Pharmacy-Requests, Prior-Authorization, Medication-Review,
+# Care-Gaps, Follow-up, Reports, Prescriptions, Referrals) no longer appear as
+# destinations: CWC files every one of those document types into Miscellaneous.
+# The distinction survives in the SUBTYPE, and in the subtype-overrides block
+# below if CWC later decides they want their own folders.
+# ─────────────────────────────────────────────────────────────────────────────
+cwc:
+  routing:
+    # SUGGEST | AUTO. Overridden by the CWC_ROUTING_MODE environment variable;
+    # this stays SUGGEST so a fresh checkout never files documents unattended.
+    mode: SUGGEST
+    base-path: storage/routed
+    manual-review-folder: Manual-Review
+
+    # Filenames -------------------------------------------------------------
+    # The AI service returns suggestedFileName (CWC house style) and
+    # alternateFileName (specification_doctype). This picks which one the
+    # routing engine proposes; the other is still shown in the UI.
+    naming:
+      style: HOUSE           # HOUSE (Allergy Consult.pdf) | SNAKE (allergy_consult.pdf)
+      # Appended when the destination folder already holds that name: " (2)", " (3)"...
+      collision-suffix: " ({n})"
+      # Keep the inbound name recoverable: SUGGEST mode never renames on disk,
+      # and AUTO mode records originalFileName in the routing audit row.
+      preserve-original-in-audit: true
+
+    # In AUTO mode, should a document that FAILS the confidence gate still be
+    # written to the outbound tree — into Manual-Review rather than into a guessed
+    # category folder?
+    #
+    # true  = everything leaves the inbound folder. Uncertain faxes land in
+    #         Manual-Review and in the app's review queue, so staff work one place.
+    # false = uncertain faxes are held in the app and their originals stay in the
+    #         inbound folder, which then accumulates.
+    #
+    # This is NOT the same as disabling the gate: an uncertain document never goes
+    # to its predicted folder, only to Manual-Review.
+    file-uncertain-to-review-folder: true
+
+    # Minimum calibrated confidence for a document to file itself.
+    #
+    # Below this it goes to Manual-Review instead of its predicted folder. This
+    # is CWC's policy dial, deliberately separate from the confidence BAND: the
+    # band is a property of the model's calibration and is used for reporting,
+    # while this is a business decision about how much doubt is acceptable
+    # before a person looks. Changing one should not silently move the other.
+    #
+    # 0.90 means "nine times in ten the folder is right, and that is not good
+    # enough to file a patient document unseen".
+    # Set to 0 to route on band alone (the pre-v2.1 behaviour).
+    auto-route-min-confidence: 0.90
+
+    # Categories that always require a human, regardless of confidence.
+    # ROI_CONSENT is here because misfiling a records-release request has legal
+    # consequences, not merely operational ones.
+    auto-route-disabled:
+      - ROI_CONSENT
+      - UNKNOWN
+
+    rules:
+      - category: CONSULTATION_REPORT
+        folder: Consultation Reports
+      - category: LAB_REPORT
+        folder: Lab Reports
+      - category: RADIOLOGY_REPORT
+        folder: Radiology Reports
+      - category: PROCEDURE_REPORT
+        folder: Procedure Reports
+      - category: HOSPITAL_RECORD
+        folder: Hospital Records
+      - category: HOMECARE
+        folder: Homecare
+      - category: FORM
+        folder: Forms
+      - category: ROI_CONSENT
+        folder: ROI Consent Form
+      - category: MISCELLANEOUS
+        folder: Miscellaneous
+      - category: UNKNOWN
+        folder: Manual-Review
+
+    # Subtype-level overrides — evaluated only when the category matches.
+    # Empty by design: CWC's tree is flat one level. This block is the hook for
+    # the moment they ask for Miscellaneous to be split by payer workflow, e.g.
+    #   - category: MISCELLANEOUS
+    #     subtype: PRIOR_AUTHORIZATION
+    #     folder: Miscellaneous/Prior Authorization
+    subtype-overrides: []
+
+    # Known sender fax numbers that always map to a specific folder.
+    # Wins over category rules when the sender number matches.
+    #
+    # DELIBERATELY EMPTY. The corpus shows sender is NOT a reliable routing key:
+    # Healthfirst (fax 646-313-4603) appears in CWC's tree twice — once under
+    # Miscellaneous as a provider letter, once under Forms as a DOH/CDPAS form
+    # to complete. A sender override would have misfiled one of them.
+    sender-overrides: []

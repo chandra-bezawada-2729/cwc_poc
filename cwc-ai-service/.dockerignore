@@ -1,0 +1,11 @@
+# Never bake secrets or local state into the image: the .env here is loaded
+# with override=True and would silently beat the compose settings.
+.env
+venv/
+.venv/
+logs/
+tests/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+*.code-workspace

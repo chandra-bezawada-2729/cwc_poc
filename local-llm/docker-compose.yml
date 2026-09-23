@@ -1,0 +1,54 @@
+# Self-hosted Qwen for the CWC POC - an OpenAI-compatible, API-key-protected
+# endpoint on http://localhost:8081/v1 that the AI service calls instead of
+# Anthropic. Nothing leaves this machine.
+#
+# Sized for an 8 GB laptop GPU (RTX 4060). Production (RTX PRO 6000 / H200)
+# runs Qwen3.8-27B on vLLM or SGLang instead - see the on-prem guide. The AI
+# service does not care which: it only sees an OpenAI-compatible URL + key.
+#
+#   start : docker compose up -d            (first start downloads ~6.5 GB)
+#   logs  : docker compose logs -f
+#   stop  : docker compose down
+#
+# The key comes from local-llm/.env (LLM_API_KEY=...), written by new-api-key.ps1.
+# That file is gitignored - never commit it.
+
+services:
+  qwen:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: cwc-qwen
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8080"        # localhost only; 8080 is the Spring backend
+    environment:
+      LLAMA_CACHE: /models
+    volumes:
+      - qwen-models:/models          # downloaded weights survive restarts
+    command:
+      - "-hf"
+      - "${LLM_MODEL:-unsloth/Qwen3.5-9B-GGUF:Q4_K_M}"   # also fetches the vision projector
+      - "--alias"
+      - "${LLM_ALIAS:-qwen3.5-9b}"   # the name the AI service sends as "model"
+      - "--api-key"
+      - "${LLM_API_KEY:?Run new-api-key.ps1 first - LLM_API_KEY is not set}"
+      - "--jinja"                    # use the model's own chat template
+      - "-c"
+      - "${LLM_CONTEXT:-32768}"      # 3 fax pages + prompt + OCR fit in ~16-20k
+      - "-ngl"
+      - "${LLM_GPU_LAYERS:-99}"      # all layers on GPU; lower (e.g. 28) if it runs out of VRAM
+      - "--parallel"
+      - "1"                          # one fax at a time keeps the KV cache small
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  qwen-models:

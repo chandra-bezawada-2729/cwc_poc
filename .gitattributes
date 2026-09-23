@@ -1,0 +1,4 @@
+# Shell scripts and nginx config run inside Linux containers: never CRLF
+*.sh        text eol=lf
+nginx.conf  text eol=lf
+Dockerfile  text eol=lf

@@ -1,0 +1,92 @@
+# ── PHI: patient documents and anything derived from them ──────────────
+storage/
+cwc-backend/storage/
+*.pdf
+*.tif
+*.tiff
+# Synthetic test fixtures are safe and SHOULD stay tracked
+!evaluation/fixtures/negative/*.pdf
+
+# Saved AI responses — contain verbatim evidence quotes from patient faxes,
+# and the filenames themselves are real fax numbers
+evaluation/fixtures/classify_responses/
+evaluation/reports/
+evaluation/passB_mapping.json
+
+# Phase run outputs — OCR text and full classification detail
+phase*_results.json
+phase*_classify_results.json
+audit_demo.csv
+
+# Logs — contain OCR text if cwc.debug.log-ocr-text was ever true
+*.log
+logs/
+cwc-ai-service/logs/
+
+# ── Secrets ────────────────────────────────────────────────────────────
+.env
+*/.env
+!.env.example
+!*/.env.example
+
+# ── Java / Maven ──────────────────────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+.mvn/wrapper/maven-wrapper.jar
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+venv/
+.venv/
+env/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Local-only runtime config ────────────────────────────────────────────────
+# Machine-specific absolute paths (C:/CWC_TEST) and the scanner toggle. Every
+# developer's differs, and committing one silently points someone else's run at
+# a folder that does not exist on their machine.
+cwc-backend/src/main/resources/application-local.properties
+
+# ── Internal working docs — kept locally, never published ────────────────
+# Assistant prompts, specs, build notes and open questions for the client.
+# README.md and RUNBOOK.md stay tracked: they are what you need to run it.
+.cursorrules
+CURSOR_PROMPTS.md
+CWC_POC_SPEC.md
+GETTING_STARTED.md
+INBOUND_AUTOMATION.md
+OPEN_QUESTIONS.md
+RUN_END_TO_END_PROMPT.md
+TAXONOMY_V2_SUMMARY.md
+UI_ENHANCEMENTS_PROMPT.md
+
+# ── Scratch ──────────────────────────────────────────────────────────────────
+Claude outputs/
+
+# Release packages built by deploy/windows/build-release.ps1
+release/

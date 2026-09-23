@@ -1,0 +1,727 @@
+# CWC Healthcare Fax — Golden Set
+# ─────────────────────────────────────────────────────────────────────────────
+# GOLDEN SET VERSION: 2.0   |   TAXONOMY: v2.0 (folder-aligned)
+#
+# 47 hand-labelled samples in three blocks:
+#
+#   A. ORIGINAL INBOUND (5)   the payer/pharmacy faxes the POC was built on,
+#                             relabelled into the v2.0 taxonomy.
+#   B. NEW INBOUND (12)       the samples CWC supplied after the POC demo.
+#   C. AVENIR REFERENCE (30)  documents CWC ALREADY FILED BY HAND. For these the
+#                             folder and the filename are not our judgement —
+#                             they are what CWC actually did. `expected_folder`
+#                             is the folder they put it in and `expected_file_name`
+#                             is the name they gave it. This block is the only
+#                             true ground truth in the set; treat a failure here
+#                             as a real miss, not a labelling dispute.
+#
+# WARNING: These filenames reference real patient faxes in CWC_DATASET_PATH.
+# Do NOT copy file contents here. Never commit actual PDFs.
+#
+# `accept_specifications` lists alternative specifications that should also be
+# considered correct — CWC's own naming is not perfectly consistent (their tree
+# holds both "Home Care Form.pdf" and "Homecare form.pdf"), so scoring the
+# specification exactly would penalise the model for CWC's own variance.
+
+golden_set_version: "2.0"
+taxonomy_version: "2.0"
+
+samples:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # BLOCK A — the original 5 inbound faxes, relabelled for taxonomy v2.0
+  # Every one of these previously had its own top-level category. CWC files them
+  # all into Miscellaneous; the old code now lives in expected_subtype.
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - file: "(212)497-8948_2026-08-18_0943PM.pdf"
+    block: original_inbound
+    expected_category: MISCELLANEOUS
+    expected_subtype: PAYER_CARE_GAP
+    expected_folder: Miscellaneous
+    expected_specification: "Care Gap Notice"
+    accept_specifications: ["Insurance Letter", "Quality Measure Notice"]
+    expected_file_name: "Care Gap Notice.pdf"
+    action_required: true
+    response_deadline: "2026-09-01"
+    sender_organization: Healthfirst
+    notes: >
+      v1.0 label was PAYER_CARE_GAP → Care-Gaps. CWC has no Care-Gaps folder;
+      their Miscellaneous folder holds the equivalent Healthfirst provider
+      letter. BOUNDARY CASE: the fax carries accept/decline response boxes and a
+      fax-back deadline, which under disambiguation rule 2 could argue for FORM.
+      It is labelled MISCELLANEOUS because the reply boxes are part of the letter
+      rather than a separate enclosed form — see OPEN_QUESTIONS item 12.
+
+  - file: "(305)503-8807_2026-08-19_0702AM.pdf"
+    block: original_inbound
+    expected_category: MISCELLANEOUS
+    expected_subtype: FOLLOW_UP_REMINDER
+    expected_folder: Miscellaneous
+    expected_specification: "Imaging Follow Up"
+    accept_specifications: ["Follow Up Reminder", "Radiology Follow Up"]
+    expected_file_name: "Imaging Follow Up.pdf"
+    action_required: true
+    response_deadline: null
+    sender_organization: Main Street Radiology
+    notes: >
+      Trap preserved from v1.0: sent by a radiology practice and referencing a
+      prior US Abdomen study, which pulls toward RADIOLOGY_REPORT. It contains no
+      new FINDINGS or IMPRESSION — it is a reminder generated from a prior report.
+      Disambiguation rule 3 requires new results for RADIOLOGY_REPORT, so this is
+      correspondence. Note CWC's own Radiology Reports folder contains a real
+      "US Abdomen.pdf" — the contrast is exactly the trap.
+
+  - file: "(360)200-5103_2026-08-19_0137AM.pdf"
+    block: original_inbound
+    expected_category: MISCELLANEOUS
+    expected_subtype: MEDICATION_REVIEW
+    expected_folder: Miscellaneous
+    expected_specification: "Medication Review"
+    accept_specifications: ["Prescription Request", "Polypharmacy Review"]
+    expected_file_name: "Medication Review.pdf"
+    action_required: true
+    response_deadline: null
+    sender_organization: RxAdvocate
+    notes: >
+      Trap preserved: full of drug names, which pulls toward a prescription
+      reading. It requests review of existing medications. CWC's own
+      Miscellaneous/Prescription Request.pdf is the same document family (a VNS
+      Health medication therapy management review), which is what fixes the folder.
+
+  - file: "(603)935-9108_2026-08-18_0945PM.pdf"
+    block: original_inbound
+    expected_category: MISCELLANEOUS
+    expected_subtype: PHARMACY_REQUEST
+    expected_folder: Miscellaneous
+    expected_specification: "Prescription Request"
+    accept_specifications: ["Medication Request"]
+    expected_file_name: "Prescription Request.pdf"
+    action_required: true
+    response_deadline: null
+    contains_fillable_form: true
+    page_count: 2
+    sender_organization: Amazon Pharmacy
+    notes: >
+      HARDEST BOUNDARY IN THE SET. Page 2 is a fillable Medication Request form
+      with authorize/deny checkboxes and a prescriber signature block, which under
+      rule 2 argues for FORM — and CWC DID file an analogous supplier form
+      (Acelleron's DME certificate) under Forms. It is labelled MISCELLANEOUS to
+      match CWC's Miscellaneous/Prescription Request.pdf. This single boundary
+      decides several future faxes; see OPEN_QUESTIONS item 13.
+
+  - file: "(614)321-2042_2026-08-18_1004PM.pdf"
+    block: original_inbound
+    expected_category: MISCELLANEOUS
+    expected_subtype: PRIOR_AUTHORIZATION
+    expected_folder: Miscellaneous
+    expected_specification: "Prescription Authorization"
+    accept_specifications: ["Prior Authorization Follow Up"]
+    expected_file_name: "Prescription Authorization.pdf"
+    action_required: true
+    response_deadline: null
+    sender_organization: CoverMyMeds
+    notes: >
+      Trap preserved: titled "Prior Authorization Follow Up", so the words
+      "Follow Up" pull toward a reminder. CWC's own
+      Miscellaneous/Prescription Authorization.pdf is the identical CoverMyMeds
+      document type, which fixes both the folder and the house-style name.
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # BLOCK B — the 12 new samples CWC supplied after the demo
+  # These are overwhelmingly CLINICAL documents, unlike block A. Nine of the
+  # twelve land in folders the v1.0 taxonomy could not reach at all.
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - file: "Sample 1 (1).pdf"
+    block: new_inbound
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: OFFICE_VISIT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Endocrine"
+    accept_specifications: ["Internal Medicine", "Endocrinology"]
+    expected_file_name: "Endocrine Consult.pdf"
+    action_required: false
+    sender_organization: Yun Feng Medical PC
+    page_count: 4
+    notes: >
+      Cover sheet on page 1 ("Office Visit letter to CBW Office"). Body is a
+      diabetes follow-up encounter — A1c trend, Mounjaro titration, Dexcom G7.
+      The specialty is inferred from the clinical content, not the letterhead,
+      which names only the physician; Internal Medicine is an acceptable read.
+
+  - file: "Sample 2.pdf"
+    block: new_inbound
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: FOLLOW_UP_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Gastroenterology"
+    accept_specifications: ["GI"]
+    expected_file_name: "Gastroenterology Consult.pdf"
+    action_required: false
+    sender_organization: GI Health
+    page_count: 3
+    notes: >
+      Trap: the encounter is a "Follow up after EGD and sonogram" and the plan
+      says "Repeat EGD in 3 years", which pulls toward PROCEDURE_REPORT. There is
+      no procedure narrative — it is a clinic letter about the visit. Rule 4.
+
+  - file: "Sample 3.pdf"
+    block: new_inbound
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: SPECIALTY_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Hematology Oncology"
+    accept_specifications: ["Hematology", "Oncology"]
+    expected_file_name: "Hematology Oncology Consult.pdf"
+    action_required: false
+    sender_organization: "Rendr: Advanced Oncology"
+    page_count: 4
+    notes: >
+      Directly parallels CWC's own Consultation Reports/Hematology Oncology
+      Consult.pdf — thrombocytopenia evaluation, "CONSULTING PROVIDER" and
+      "REFERRING PROVIDER" fields, "I have the pleasure of seeing your patient".
+
+  - file: "Sample 4.pdf"
+    block: new_inbound
+    expected_category: FORM
+    expected_subtype: HOME_HEALTH_PLAN_OF_CARE
+    expected_folder: Forms
+    expected_specification: "Home Care Form"
+    accept_specifications: ["Homecare Form", "Home Health Plan of Care"]
+    expected_file_name: "Home Care Form.pdf"
+    action_required: true
+    response_deadline: null
+    sender_organization: "Extended Home Care, Inc"
+    page_count: 7
+    notes: >
+      THE KEY TRAP FOR RULE 2. A home-care agency sends a CMS-485 HOME HEALTH
+      CERTIFICATION AND PLAN OF CARE with "URGENT Please sign home care order and
+      fax back". Sender and content both point at HOMECARE; the unsigned
+      physician certification block sends it to FORM. CWC's own tree confirms
+      this: Forms/Home Care Form.pdf and Forms/Homecare form.pdf are both
+      sign-and-return, while Homecare/HomeCare Report.pdf is marked "For Review".
+
+  - file: "Sample 5.pdf"
+    block: new_inbound
+    expected_category: HOSPITAL_RECORD
+    expected_subtype: SUMMARY_OF_CARE
+    expected_folder: Hospital Records
+    expected_specification: "Hospital Record"
+    accept_specifications: ["Discharge Summary", "Summary of Care"]
+    expected_file_name: "Hospital Record.pdf"
+    action_required: false
+    sender_organization: Northwell Health
+    page_count: 24
+    notes: >
+      24 pages, the longest in the set. Opens with the continuity-of-care
+      sentence, then Encounter Diagnoses, a long Problem List, Current
+      Medications, Flowsheet Rows and microbiology with susceptibilities. Rule 5:
+      the bulk and the continuity framing make it HOSPITAL_RECORD, not a consult
+      and not LAB_REPORT despite pages of culture results. Directly parallels
+      CWC's Hospital Records/Hospital Record.pdf.
+
+  - file: "Sample 6.pdf"
+    block: new_inbound
+    expected_category: LAB_REPORT
+    expected_subtype: CLINICAL_LAB_RESULT
+    expected_folder: Lab Reports
+    expected_specification: "Lab Result"
+    accept_specifications: ["Occult Blood", "Stool Occult Blood"]
+    expected_file_name: "Lab Result.pdf"
+    action_required: false
+    sender_organization: "BioReference Health, LLC"
+    page_count: 3
+    notes: >
+      Cover sheet page 1, "Final Report" page 2 — OCCULT BLD,STOOL,IMMUNO with a
+      result, a reference value and a prior result. Parallels CWC's
+      Lab Reports/Lab Result.pdf.
+
+  - file: "Sample 7.pdf"
+    block: new_inbound
+    expected_category: FORM
+    expected_subtype: MEDICAL_CLEARANCE_FORM
+    expected_folder: Forms
+    expected_specification: "Medical Clearance"
+    accept_specifications: ["Preoperative Clearance", "Pre-op Clearance"]
+    expected_file_name: "Medical Clearance.pdf"
+    action_required: true
+    response_deadline: null
+    sender_organization: NewYork-Presbyterian Lower Manhattan Hospital
+    page_count: 3
+    notes: >
+      PREOPERATIVE MEDICAL EVALUATION with blank Physical Exam, Lab values,
+      EKG fields and an unsigned physician block; "PLEASE FAX BACK CLEARANCE NOTE
+      AND TEST RESULTS TO US". Near-identical to CWC's Forms/Medical Clearance.pdf
+      (a NYP Queens preoperative medical risk assessment). The surgery date on the
+      form is NOT a provider response deadline.
+
+  - file: "Sample 8.pdf"
+    block: new_inbound
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: SPECIALTY_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Ophthalmology"
+    accept_specifications: ["Ophthalmology Consult", "Eye"]
+    expected_file_name: "Ophthalmology Consult.pdf"
+    action_required: false
+    sender_organization: "Vision Care Ophthalmology, PC"
+    page_count: 1
+    notes: >
+      Single page, no cover sheet. "Dear Dr. ... This is an update on ... summary
+      of my findings", HPI, VA/IOP measurements, numbered Imp/Plan, ICD-10 codes.
+      The measurements are in-office findings inside the encounter — rule 4 keeps
+      this out of LAB_REPORT.
+
+  - file: "Sample 9.pdf"
+    block: new_inbound
+    expected_category: FORM
+    expected_subtype: EARLY_INTERVENTION_FORM
+    expected_folder: Forms
+    expected_specification: "Early Intervention Form"
+    accept_specifications: ["Child Health Examination Form", "School Health Form"]
+    expected_file_name: "Early Intervention Form.pdf"
+    action_required: true
+    response_deadline: null
+    sender_organization: Cooper Kids Therapy Associates
+    page_count: 4
+    notes: >
+      RULE 1 vs RULE 2 TRAP. Titled "MEDICAL AND PRESCRIPTION FORMS REQUEST WITH
+      PARENT RELEASE CONSENT", so the words "release consent" pull toward
+      ROI_CONSENT. But the deliverable is a completed NYS child health
+      examination form — clinical information about the patient, not a release of
+      records — so rule 1 does not fire and rule 2 sends it to FORM.
+      Expected runner-up: ROI_CONSENT.
+
+  - file: "Sample 10.pdf"
+    block: new_inbound
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: ULTRASOUND_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "US Bladder"
+    accept_specifications: ["US Pelvis", "US Urinary Bladder"]
+    expected_file_name: "US Bladder.pdf"
+    action_required: false
+    sender_organization: CP Advanced Imaging
+    page_count: 2
+    notes: >
+      AbbaDox fax cover on page 1, report on page 2: EXAM / COMPARISON /
+      INDICATIONS / TECHNIQUE / FINDINGS / IMPRESSION, electronically signed by a
+      radiologist. Textbook rule 3. Naming follows CWC's "US <Body Part>" style.
+
+  - file: "Sample 11 (1).pdf"
+    block: new_inbound
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: ULTRASOUND_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "US Abdomen"
+    accept_specifications: ["US RUQ", "US Right Upper Quadrant"]
+    expected_file_name: "US Abdomen.pdf"
+    action_required: false
+    sender_organization: Rendr Medical Imaging
+    page_count: 1
+    notes: >
+      RUQ ultrasound — liver, gallbladder, CBD, right kidney, IMPRESSION of
+      hepatic steatosis. CWC's own Radiology Reports/US Abdomen.pdf is the same
+      study type, which is why the abdominal name is preferred over "US RUQ".
+
+  - file: "Sample 12.pdf"
+    block: new_inbound
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: OFFICE_VISIT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Urology"
+    accept_specifications: ["Urology Consult"]
+    expected_file_name: "Urology Consult.pdf"
+    action_required: false
+    sender_organization: "Marcus H. Loo, MD, LLC"
+    page_count: 3
+    notes: >
+      RULE 4 TRAP, the strongest in block B. An OFFICE VISIT REPORT that embeds a
+      transrectal ultrasound with a measured prostate volume, a limited pelvic
+      ultrasound with a post-void residual, and a full urinalysis dipstick — real
+      imaging and real lab values. The encounter is the frame, so it stays
+      CONSULTATION_REPORT. Expected runner-up: RADIOLOGY_REPORT.
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # BLOCK C — Avenir reference set: 30 documents CWC filed by hand.
+  # Folder and filename here are CWC's actual decisions, not our labels.
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - file: "Sample for Avenir Digital/Consultation Reports/Allergy Consult.pdf"
+    block: avenir_reference
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: FOLLOW_UP_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Allergy"
+    expected_file_name: "Allergy Consult.pdf"
+    sender_organization: Basicare Medical P.C.
+
+  - file: "Sample for Avenir Digital/Consultation Reports/Breast Clinic.pdf"
+    block: avenir_reference
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: FOLLOW_UP_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Breast Clinic"
+    accept_specifications: ["Surgery", "Breast Surgery"]
+    expected_file_name: "Breast Clinic Consult.pdf"
+    sender_organization: "Rendr: Surgery"
+    notes: >
+      CWC named this "Breast Clinic.pdf" without the word Consult, so the
+      generated "Breast Clinic Consult.pdf" differs from their filename by that
+      suffix. Folder and specification are correct; the filename mismatch is a
+      known artefact of CWC's own inconsistency.
+
+  - file: "Sample for Avenir Digital/Consultation Reports/Endocrine Consult.pdf"
+    block: avenir_reference
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: FOLLOW_UP_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Endocrine"
+    accept_specifications: ["Endocrinology"]
+    expected_file_name: "Endocrine Consult.pdf"
+    sender_organization: Endocrine Associates of West Village, PC
+
+  - file: "Sample for Avenir Digital/Consultation Reports/Hematology Oncology Consult.pdf"
+    block: avenir_reference
+    expected_category: CONSULTATION_REPORT
+    expected_subtype: FOLLOW_UP_CONSULT_NOTE
+    expected_folder: Consultation Reports
+    expected_specification: "Hematology Oncology"
+    expected_file_name: "Hematology Oncology Consult.pdf"
+    sender_organization: Hematology Oncology Associates of New York
+
+  - file: "Sample for Avenir Digital/Forms/CDPAS Form.pdf"
+    block: avenir_reference
+    expected_category: FORM
+    expected_subtype: CDPAS_DOH_FORM
+    expected_folder: Forms
+    expected_specification: "CDPAS Form"
+    accept_specifications: ["DOH Form"]
+    expected_file_name: "CDPAS Form.pdf"
+    sender_organization: Healthfirst
+    notes: >
+      Sender-override trap. Healthfirst also appears in Miscellaneous as an
+      insurance letter. Same sender, two folders — which is why
+      sender-overrides is empty in routing-config.yml.
+
+  - file: "Sample for Avenir Digital/Forms/FMLA Form.pdf"
+    block: avenir_reference
+    expected_category: FORM
+    expected_subtype: FMLA_CERTIFICATION
+    expected_folder: Forms
+    expected_specification: "FMLA Form"
+    expected_file_name: "FMLA Form.pdf"
+    sender_organization: ComPsych Corporation
+
+  - file: "Sample for Avenir Digital/Forms/Home Care Form.pdf"
+    block: avenir_reference
+    expected_category: FORM
+    expected_subtype: HOME_HEALTH_PLAN_OF_CARE
+    expected_folder: Forms
+    expected_specification: "Home Care Form"
+    expected_file_name: "Home Care Form.pdf"
+    sender_organization: Home Family Care
+
+  - file: "Sample for Avenir Digital/Forms/Homecare form.pdf"
+    block: avenir_reference
+    expected_category: FORM
+    expected_subtype: HOME_HEALTH_PLAN_OF_CARE
+    expected_folder: Forms
+    expected_specification: "Home Care Form"
+    accept_specifications: ["Homecare Form"]
+    expected_file_name: "Home Care Form.pdf"
+    sender_organization: Cassena Care at Home
+    notes: >
+      CWC filed this as "Homecare form.pdf" and the previous sample as
+      "Home Care Form.pdf" — the same document type under two spellings. The
+      generator emits one canonical name for both, which is the intended
+      behaviour, not a failure.
+
+  - file: "Sample for Avenir Digital/Forms/Medical Clearance.pdf"
+    block: avenir_reference
+    expected_category: FORM
+    expected_subtype: MEDICAL_CLEARANCE_FORM
+    expected_folder: Forms
+    expected_specification: "Medical Clearance"
+    expected_file_name: "Medical Clearance.pdf"
+    sender_organization: NewYork-Presbyterian Queens
+
+  - file: "Sample for Avenir Digital/Forms/Medical Supply Form.pdf"
+    block: avenir_reference
+    expected_category: FORM
+    expected_subtype: DME_SUPPLY_CMN
+    expected_folder: Forms
+    expected_specification: "Medical Supply Form"
+    expected_file_name: "Medical Supply Form.pdf"
+    sender_organization: Acelleron
+    notes: >
+      A supplier asking the provider to tick equipment, sign and fax back a CMN.
+      Compare block A's Amazon Pharmacy fax, which is the same shape but filed by
+      CWC in Miscellaneous — the unresolved boundary in OPEN_QUESTIONS item 13.
+
+  - file: "Sample for Avenir Digital/Homecare/HomeCare Report.pdf"
+    block: avenir_reference
+    expected_category: HOMECARE
+    expected_subtype: HOMECARE_DISCHARGE_TRANSFER_SUMMARY
+    expected_folder: Homecare
+    expected_specification: "HomeCare Report"
+    accept_specifications: ["HomeCare Discharge Summary"]
+    expected_file_name: "HomeCare Report.pdf"
+    sender_organization: Royal Care Certified Home Health Care LLC
+    notes: >
+      The counterweight to Sample 4. Same industry, same fax cover layout — but
+      the "For Review" box is ticked and "Please Sign, Date and Return" is not.
+      This one distinction separates Homecare from Forms.
+
+  - file: "Sample for Avenir Digital/Hospital Records/ER Record.pdf"
+    block: avenir_reference
+    expected_category: HOSPITAL_RECORD
+    expected_subtype: ER_RECORD
+    expected_folder: Hospital Records
+    expected_specification: "ER Record"
+    expected_file_name: "ER Record.pdf"
+    sender_organization: Long Island Jewish
+
+  - file: "Sample for Avenir Digital/Hospital Records/Hospital Record.pdf"
+    block: avenir_reference
+    expected_category: HOSPITAL_RECORD
+    expected_subtype: SUMMARY_OF_CARE
+    expected_folder: Hospital Records
+    expected_specification: "Hospital Record"
+    expected_file_name: "Hospital Record.pdf"
+    sender_organization: NewYork-Presbyterian / Columbia
+
+  - file: "Sample for Avenir Digital/Lab Reports/Colonoscopy Pathology.pdf"
+    block: avenir_reference
+    expected_category: LAB_REPORT
+    expected_subtype: PATHOLOGY_REPORT
+    expected_folder: Lab Reports
+    expected_specification: "Colonoscopy Pathology"
+    expected_file_name: "Colonoscopy Pathology.pdf"
+    sender_organization: NewPath Diagnostics
+    notes: >
+      Pairs with Procedure Reports/Colonoscopy.pdf — the SAME patient encounter
+      split across two folders by who authored the fax. Rule 3.
+
+  - file: "Sample for Avenir Digital/Lab Reports/EGD Pathology.pdf"
+    block: avenir_reference
+    expected_category: LAB_REPORT
+    expected_subtype: PATHOLOGY_REPORT
+    expected_folder: Lab Reports
+    expected_specification: "EGD Pathology"
+    expected_file_name: "EGD Pathology.pdf"
+    sender_organization: PathGenix Diagnostics
+    notes: Pairs with Procedure Reports/EGD Report.pdf. Same rule-3 split.
+
+  - file: "Sample for Avenir Digital/Lab Reports/Lab Result.pdf"
+    block: avenir_reference
+    expected_category: LAB_REPORT
+    expected_subtype: CLINICAL_LAB_RESULT
+    expected_folder: Lab Reports
+    expected_specification: "Lab Result"
+    accept_specifications: ["CBC"]
+    expected_file_name: "Lab Result.pdf"
+    sender_organization: Northwell Health Laboratories
+
+  - file: "Sample for Avenir Digital/Miscellaneous/Insurance Letter.pdf"
+    block: avenir_reference
+    expected_category: MISCELLANEOUS
+    expected_subtype: INSURANCE_LETTER
+    expected_folder: Miscellaneous
+    expected_specification: "Insurance Letter"
+    expected_file_name: "Insurance Letter.pdf"
+    sender_organization: Healthfirst
+
+  - file: "Sample for Avenir Digital/Miscellaneous/Person-Centered Service Plan.pdf"
+    block: avenir_reference
+    expected_category: MISCELLANEOUS
+    expected_subtype: SERVICE_PLAN
+    expected_folder: Miscellaneous
+    expected_specification: "Person-Centered Service Plan"
+    expected_file_name: "Person-Centered Service Plan.pdf"
+    sender_organization: Anthem Blue Cross Blue Shield
+    notes: >
+      17 pages and explicitly "for your review only; no further action is needed
+      at this time" — actionRequired must be false despite the length.
+
+  - file: "Sample for Avenir Digital/Miscellaneous/Prescription Authorization.pdf"
+    block: avenir_reference
+    expected_category: MISCELLANEOUS
+    expected_subtype: PRIOR_AUTHORIZATION
+    expected_folder: Miscellaneous
+    expected_specification: "Prescription Authorization"
+    expected_file_name: "Prescription Authorization.pdf"
+    sender_organization: CoverMyMeds
+    notes: >
+      The document that proves PRIOR_AUTHORIZATION belongs in Miscellaneous. It
+      is the same CoverMyMeds ePA fax as block A's (614)321-2042.
+
+  - file: "Sample for Avenir Digital/Miscellaneous/Prescription Request.pdf"
+    block: avenir_reference
+    expected_category: MISCELLANEOUS
+    expected_subtype: MEDICATION_REVIEW
+    expected_folder: Miscellaneous
+    expected_specification: "Prescription Request"
+    accept_specifications: ["Medication Review"]
+    expected_file_name: "Prescription Request.pdf"
+    sender_organization: VNS Health
+    notes: >
+      Titled "Quality Improvement Opportunity" on the cover, a Medication Therapy
+      Management targeted medication review in the body. Cover-sheet subject
+      lines are not the decision — see the cover-sheet section of the prompt.
+
+  - file: "Sample for Avenir Digital/Procedure Reports/Colonoscopy.pdf"
+    block: avenir_reference
+    expected_category: PROCEDURE_REPORT
+    expected_subtype: COLONOSCOPY_REPORT
+    expected_folder: Procedure Reports
+    expected_specification: "Colonoscopy"
+    expected_file_name: "Colonoscopy.pdf"
+    sender_organization: Xie Jianlin Gastroenterology & Hepatology, PLLC
+
+  - file: "Sample for Avenir Digital/Procedure Reports/EGD Report.pdf"
+    block: avenir_reference
+    expected_category: PROCEDURE_REPORT
+    expected_subtype: EGD_REPORT
+    expected_folder: Procedure Reports
+    expected_specification: "EGD Report"
+    accept_specifications: ["EGD"]
+    expected_file_name: "EGD Report.pdf"
+    sender_organization: Flushing Endoscopy
+
+  - file: "Sample for Avenir Digital/Radiology Reports/Chest X-ray.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: XRAY_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "Chest X-ray"
+    expected_file_name: "Chest X-ray.pdf"
+    sender_organization: Lenox Hill Radiology
+
+  - file: "Sample for Avenir Digital/Radiology Reports/Mammo Report.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: MAMMOGRAPHY_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "Mammo Report"
+    accept_specifications: ["Mammogram"]
+    expected_file_name: "Mammo Report.pdf"
+
+  - file: "Sample for Avenir Digital/Radiology Reports/MRI Ankle.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: MRI_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "MRI Ankle"
+    expected_file_name: "MRI Ankle.pdf"
+    sender_organization: Main Street Radiology
+
+  - file: "Sample for Avenir Digital/Radiology Reports/Prenatal US.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: ULTRASOUND_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "Prenatal US"
+    accept_specifications: ["OB US", "US Obstetric"]
+    expected_file_name: "Prenatal US.pdf"
+
+  - file: "Sample for Avenir Digital/Radiology Reports/US Abdomen.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: ULTRASOUND_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "US Abdomen"
+    expected_file_name: "US Abdomen.pdf"
+
+  - file: "Sample for Avenir Digital/Radiology Reports/US Breast.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: ULTRASOUND_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "US Breast"
+    expected_file_name: "US Breast.pdf"
+
+  - file: "Sample for Avenir Digital/Radiology Reports/US Pelvis.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: ULTRASOUND_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "US Pelvis"
+    expected_file_name: "US Pelvis.pdf"
+
+  - file: "Sample for Avenir Digital/Radiology Reports/X-ray LS Spine.pdf"
+    block: avenir_reference
+    expected_category: RADIOLOGY_REPORT
+    expected_subtype: XRAY_REPORT
+    expected_folder: Radiology Reports
+    expected_specification: "X-ray LS Spine"
+    accept_specifications: ["X-ray Lumbar Spine"]
+    expected_file_name: "X-ray LS Spine.pdf"
+
+  - file: "Sample for Avenir Digital/ROI Consent Form/Sample 1.pdf"
+    block: avenir_reference
+    expected_category: ROI_CONSENT
+    expected_subtype: REQUEST_TO_COPY_PHI
+    expected_folder: ROI Consent Form
+    expected_specification: "ROI Consent"
+    accept_specifications: ["Request to Copy PHI", "Records Request"]
+    expected_file_name: "ROI Consent.pdf"
+    sender_organization: "Dalai Zhou, MD"
+    notes: >
+      CWC's ROI folder is named "Sample 1..6" — they never established a
+      convention here, so expected_file_name is our proposal, not their history.
+
+  - file: "Sample for Avenir Digital/ROI Consent Form/Sample 2.pdf"
+    block: avenir_reference
+    expected_category: ROI_CONSENT
+    expected_subtype: DISABILITY_RECORDS_REQUEST
+    expected_folder: ROI Consent Form
+    expected_specification: "Disability Records Request"
+    accept_specifications: ["Records Request"]
+    expected_file_name: "Disability Records Request.pdf"
+    sender_organization: NYS OTDA Division of Disability Determinations
+    notes: >
+      RULE 1 vs RULE 2 TRAP. There is a questionnaire to complete and a payment
+      voucher, which argues FORM. The deliverable is the patient's records, so
+      rule 1 wins.
+
+  - file: "Sample for Avenir Digital/ROI Consent Form/Sample 3.pdf"
+    block: avenir_reference
+    expected_category: ROI_CONSENT
+    expected_subtype: HIPAA_AUTHORIZATION
+    expected_folder: ROI Consent Form
+    expected_specification: "HIPAA Authorization"
+    accept_specifications: ["ROI Consent"]
+    expected_file_name: "HIPAA Authorization.pdf"
+    notes: OCA Official Form No. 960, the canonical NYS HIPAA release.
+
+  - file: "Sample for Avenir Digital/ROI Consent Form/Sample 4.pdf"
+    block: avenir_reference
+    expected_category: ROI_CONSENT
+    expected_subtype: LIFE_INSURANCE_RECORDS_REQUEST
+    expected_folder: ROI Consent Form
+    expected_specification: "Life Insurance Records Request"
+    accept_specifications: ["Records Request"]
+    expected_file_name: "Life Insurance Records Request.pdf"
+    sender_organization: eNoah iSolution, Inc
+
+  - file: "Sample for Avenir Digital/ROI Consent Form/Sample 5.pdf"
+    block: avenir_reference
+    expected_category: ROI_CONSENT
+    expected_subtype: ATTENDING_PHYSICIAN_STATEMENT
+    expected_folder: ROI Consent Form
+    expected_specification: "Attending Physician Statement"
+    accept_specifications: ["Records Request", "Life Insurance Records Request"]
+    expected_file_name: "Attending Physician Statement.pdf"
+    sender_organization: Parameds / New York Life Insurance Co
+
+  - file: "Sample for Avenir Digital/ROI Consent Form/Sample 6.pdf"
+    block: avenir_reference
+    expected_category: ROI_CONSENT
+    expected_subtype: HIPAA_AUTHORIZATION
+    expected_folder: ROI Consent Form
+    expected_specification: "HIPAA Authorization"
+    accept_specifications: ["ROI Consent"]
+    expected_file_name: "HIPAA Authorization.pdf"
+    notes: NYS DOH release including alcohol/drug, mental health and HIV/AIDS information.

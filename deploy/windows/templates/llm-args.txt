@@ -1,0 +1,1 @@
+-m D:\cwc\llm\models\Qwen3.8-27B-UD-Q5_K_XL.gguf --mmproj D:\cwc\llm\models\mmproj-F16.gguf --alias qwen3.8-27b --api-key-file D:\cwc\llm\api-key.txt --host 127.0.0.1 --port 8081 --jinja -ngl 99 -c 65536 --parallel 2 -fa on -ctk q8_0 -ctv q8_0 --no-webui

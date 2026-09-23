@@ -1,0 +1,16 @@
+# CWC AI Service — Python 3.11
+flask>=3.0,<4.0
+waitress>=3.0          # production WSGI server (CWC_SERVER=waitress)
+python-dotenv>=1.0
+anthropic>=0.28
+openai>=1.40             # OpenAI-compatible client, also used for self-hosted Qwen
+pymupdf>=1.24          # fitz — page rendering (PyMuPDF)
+pytesseract>=0.3.13    # Tesseract OCR wrapper
+Pillow>=10.0
+pdfminer.six>=20220524  # native text extraction for born-digital PDFs
+pyyaml>=6.0
+rapidfuzz>=3.9         # fuzzy evidence matching for confidence scoring
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+pytest>=8.0
+pytest-mock>=3.14

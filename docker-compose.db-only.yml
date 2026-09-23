@@ -1,0 +1,39 @@
+# =============================================================================
+# OPTIONAL FALLBACK — Docker Compose PostgreSQL
+# =============================================================================
+# The PRIMARY database setup for this project is native PostgreSQL 17 on
+# port 5432. See README.md §"Database setup" for CREATE ROLE / CREATE DATABASE
+# instructions.
+#
+# Use this file ONLY if you do not have a local PostgreSQL installation.
+# Docker Desktop licensing may restrict use in corporate environments.
+#
+# If you do use Docker, the container maps to port 5435 because:
+#   - 5432 = native PG17 (primary, used by CWC POC)
+#   - 5433 = native PG16 (used by eMENDER — do not touch)
+#   - 5435 = this container (must not collide with either)
+# Update spring.datasource.url in application.properties to 5435 if you
+# switch to this path.
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: cwc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cwc
+      POSTGRES_USER: cwc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cwc_dev_password}
+    ports:
+      - "5435:5432"
+    volumes:
+      - cwc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cwc -d cwc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cwc_pgdata:

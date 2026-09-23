@@ -1,0 +1,24 @@
+/* Global reset. Tokens live in styles/tokens.css; layout in App.css. */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* color-scheme is set per theme in tokens.css, so the toggle carries it. */
+
+body {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root { min-height: 100vh; }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+::selection { background: var(--accent-soft); color: var(--ink); }
