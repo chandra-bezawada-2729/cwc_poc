@@ -1,3 +1,9 @@
+# Required: per-user API keys are 64 hex chars, longer than nginx's default
+# 64-byte map hash bucket. Without these nginx refuses to start with
+# "could not build map_hash". NOT present in the source DGX Spark guide.
+map_hash_bucket_size 128;
+map_hash_max_size 2048;
+
 # Mirrors templates/llm.conf.template from the DGX Spark guide.
 # OpenAI clients send "Authorization: Bearer <key>"; Anthropic clients send
 # "x-api-key: <key>". Accept both, map to one per-user identity.

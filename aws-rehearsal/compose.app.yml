@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Run the FULL fax application against the SGLang gateway that is already
+# running from compose.cpu.yml + compose.hipaa.yml.
+#
+# The point of this file: the application does not get its own model container.
+# It talks to the same HTTPS gateway, with its own per-caller key, exactly as
+# it would at the client. Nothing in the application is aware of which engine
+# or model is behind the endpoint.
+#
+#   cd ~/cwc_poc
+#   docker compose -f docker-compose.yml -f aws-rehearsal/compose.app.yml up -d --build
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+
+  # No model container here - the gateway already serves one.
+  llm:
+    profiles: ["unused"]
+
+  ai:
+    depends_on: !reset []
+    networks: !override [internal, llmnet]
+    environment:
+      LLM_PROVIDER: openai
+      OPENAI_BASE_URL: https://llm.internal/v1     # the gateway, not a model
+      OPENAI_API_KEY: ${CLIENT_KEY:?Set CLIENT_KEY - the per-caller gateway key}
+      OPENAI_MODEL: ${SERVED_NAME:-qwen-base}
+      ANTHROPIC_API_KEY: ""
+      SSL_CERT_FILE: /etc/ssl/llm/llm.crt          # trust the gateway's certificate
+      REQUESTS_CA_BUNDLE: /etc/ssl/llm/llm.crt
+      CWC_MAX_RENDER_PAGES: "3"
+      CWC_LLM_TIMEOUT_SECS: "1800"                 # CPU inference is slow - be patient
+      CWC_DEBUG_LOG_OCR_TEXT: "false"
+    volumes: !override
+      - ${CWC_DATA_DIR:-/srv/cwc-data}:/data:ro
+      - ai-logs:/app/logs
+      - /opt/qwen-aws/tls/llm.crt:/etc/ssl/llm/llm.crt:ro
+
+  backend:
+    environment:
+      CWC_LLM_TIMEOUT_SECS: "1800"
+    volumes: !override
+      - ${CWC_DATA_DIR:-/srv/cwc-data}:/data
+
+  web:
+    # Bound to all interfaces, not 127.0.0.1: this is the "reachable by staff
+    # on the network" case. What limits access is the firewall in front (the
+    # AWS security group here; CBWCHC's network rules at the client).
+    ports: !override
+      - "0.0.0.0:${WEB_PORT:-8088}:80"
+
+networks:
+  # The gateway's external-facing network, created by compose.cpu.yml.
+  llmnet:
+    external: true
+    name: qwen-aws_edge

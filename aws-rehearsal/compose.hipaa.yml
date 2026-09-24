@@ -22,7 +22,10 @@ services:
     restart: unless-stopped
     depends_on: [qwen]
     ports: ["443:443"]
-    networks: [llm_internal, edge]
+    networks:
+      llm_internal: {}
+      edge:
+        aliases: [llm.internal]   # matches the TLS certificate CN
     environment:
       API_KEY: ${API_KEY}
     volumes:
