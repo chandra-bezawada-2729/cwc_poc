@@ -41,6 +41,11 @@ services:
   backend:
     environment:
       CWC_LLM_TIMEOUT_SECS: "1800"
+      # Must list the address staff actually type in the browser. Browsers send
+      # an Origin header on POST but not on GET, so a wrong value here lets the
+      # whole interface load and fails ONLY on upload, with "403 Invalid CORS
+      # request" — which reads like a permissions problem and is not one.
+      CORS_ORIGINS: ${WEB_ORIGIN:?Set WEB_ORIGIN in .env - e.g. http://fax-ai.cbwchc.internal:8088}
     volumes: !override
       - ${DATA_DIR:-/srv/cwc-data}:/data
 
