@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGE 2 — run the FULL application stack with SGLang instead of llama.cpp.
+#
+# THE SAME FILE IS USED ON THE LAPTOP AND ON THE CLIENT SERVER.
+# Only the root .env changes.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.sglang.yml up -d --build
+#
+# Why nothing else in the stack changes:
+#   - the service is still called "llm", so the ai service still reaches it
+#     at http://llm:8080/v1
+#   - --served-model-name is set to LLM_ALIAS, the same name the ai service
+#     sends in the "model" field
+#   - it stays on the internal network with no route out
+#
+# PREREQUISITE: the weights must already be in the local-llm_hf-cache volume,
+# because the internal network cannot reach Hugging Face. Stage 1
+# (local-llm/docker-compose.sglang.yml) is what puts them there. HF_HUB_OFFLINE
+# below makes a missing cache fail fast and loudly instead of hanging on a
+# download that can never succeed.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  llm:
+    image: lmsysorg/sglang:${SGLANG_TAG:-latest}
+    shm_size: ${SGLANG_SHM:-8g}
+    environment:
+      DO_NOT_TRACK: "1"
+      HF_HUB_OFFLINE: "1"
+    volumes: !override
+      - hf-cache:/root/.cache/huggingface:ro
+    # Folded string form (not a list) so that SGLANG_EXTRA_ARGS can expand to
+    # zero, one or several flags. On the laptop it carries the fp8 and
+    # CUDA-graph flags; on a 24 GB server it is simply left empty.
+    command: !override >
+      python3 -m sglang.launch_server
+      --model-path ${SGLANG_MODEL:?Set SGLANG_MODEL in the root .env}
+      --served-model-name ${LLM_ALIAS:?Set LLM_ALIAS in the root .env}
+      --api-key ${LLM_API_KEY:?Set LLM_API_KEY in the root .env}
+      --context-length ${SGLANG_CONTEXT:-16384}
+      --mem-fraction-static ${SGLANG_MEM:-0.80}
+      --max-running-requests ${SGLANG_MAX_RUNNING:-1}
+      ${SGLANG_EXTRA_ARGS:-}
+      --host 0.0.0.0 --port 8080
+    healthcheck: !override
+      test: ["CMD", "python3", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/health',timeout=5).status==200 else 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 600s
+
+volumes:
+  hf-cache:
+    name: local-llm_hf-cache
+    external: true

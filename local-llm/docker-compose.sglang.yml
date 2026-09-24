@@ -1,36 +1,51 @@
-# Learning setup: the guide's primary engine (SGLang) on the laptop.
-# Same model, key and API as the vLLM file; port 30000 like the guide.
+# ─────────────────────────────────────────────────────────────────────────────
+# SGLang model server — STAGE 1 (has internet, downloads the weights)
 #
-#   stop the others first : docker compose down ; docker compose -f docker-compose.vllm.yml down
-#   start                 : docker compose -f docker-compose.sglang.yml up -d
-#   logs                  : docker compose -f docker-compose.sglang.yml logs -f
+# THE SAME FILE IS USED ON THE LAPTOP AND ON THE CLIENT SERVER.
+# Only the values in .env change. Never edit this file per-environment.
 #
-# SGLang is less tested on WSL2/Docker Desktop than vLLM. If it fails to start,
-# note the error: that is part of what this exercise is for.
+#   laptop  : SGLANG_MODEL=Qwen/Qwen3.5-4B   + --quantization fp8   (8 GB GPU)
+#   client  : SGLANG_MODEL=<larger model>    + no quantisation flag (24 GB+ GPU)
+#
+#   start : docker compose -f docker-compose.sglang.yml up -d
+#   logs  : docker compose -f docker-compose.sglang.yml logs -f
+#   stop  : docker compose -f docker-compose.sglang.yml down
+#
+# This stage proves the model loads and answers. Once it does, the full
+# application stack runs it offline via the root docker-compose.sglang.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+name: local-llm
 
 services:
   sglang:
-    image: lmsysorg/sglang:latest          # pin the exact tag once it works
+    image: lmsysorg/sglang:${SGLANG_TAG:-latest}
     container_name: cwc-sglang
     restart: "no"
     ports:
-      - "127.0.0.1:30000:30000"
-    shm_size: 8g
+      - "127.0.0.1:${SGLANG_PORT:-30000}:8080"
+    shm_size: ${SGLANG_SHM:-8g}
     environment:
       DO_NOT_TRACK: "1"
+      HF_HUB_ENABLE_HF_TRANSFER: "0"
     volumes:
       - hf-cache:/root/.cache/huggingface
     command: >
       python3 -m sglang.launch_server
-      --model-path QuantTrio/Qwen3.5-4B-AWQ
-      --served-model-name qwen3.5-4b
+      --model-path ${SGLANG_MODEL:?Set SGLANG_MODEL in local-llm/.env}
+      --served-model-name ${SGLANG_ALIAS:?Set SGLANG_ALIAS in local-llm/.env}
       --api-key ${LLM_API_KEY:?Run new-api-key.ps1 first}
-      --context-length ${SGLANG_CONTEXT:-24576}
+      --context-length ${SGLANG_CONTEXT:-16384}
       --mem-fraction-static ${SGLANG_MEM:-0.80}
-      --max-running-requests 1
-      --disable-cuda-graph
-      --reasoning-parser qwen3
-      --host 0.0.0.0 --port 30000
+      --max-running-requests ${SGLANG_MAX_RUNNING:-1}
+      ${SGLANG_EXTRA_ARGS:-}
+      --host 0.0.0.0 --port 8080
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/health',timeout=5).status==200 else 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 600s
     deploy:
       resources:
         reservations:
@@ -41,4 +56,4 @@ services:
 
 volumes:
   hf-cache:
-    name: local-llm_hf-cache               # share the downloaded weights with the vLLM setup
+    name: local-llm_hf-cache

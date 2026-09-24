@@ -1,0 +1,36 @@
+# Mirrors compose.hipaa.yml from the guide, unchanged in substance.
+# Run AFTER correctness-check.sh passes - once this is applied the engine
+# port is no longer reachable and only the gateway answers.
+#   docker compose -f compose.cpu.yml -f compose.hipaa.yml up -d
+# Requires Docker Compose 2.24.4+ for !reset / !override.
+services:
+  qwen:
+    ports: !reset []                        # engine not reachable from the network
+    networks: !override [llm_internal]      # no route out: no telemetry, no URL fetches
+    environment:
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      DO_NOT_TRACK: "1"
+      OMP_NUM_THREADS: ${OMP_NUM_THREADS:-6}
+    logging:
+      driver: json-file
+      options: {max-size: "50m", max-file: "5"}
+
+  gateway:
+    image: nginx:stable-alpine
+    container_name: llm-gateway
+    restart: unless-stopped
+    depends_on: [qwen]
+    ports: ["443:443"]
+    networks: [llm_internal, edge]
+    environment:
+      API_KEY: ${API_KEY}
+    volumes:
+      - ./templates:/etc/nginx/templates:ro
+      - ./tls:/etc/nginx/tls:ro
+      - /var/log/llm-audit:/var/log/nginx
+
+networks:
+  llm_internal:
+    internal: true
+  edge: {}

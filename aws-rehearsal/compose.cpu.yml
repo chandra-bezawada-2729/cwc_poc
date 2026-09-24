@@ -1,0 +1,28 @@
+# Mirrors compose.spark.yml from the DGX Spark guide.
+# Same file shape, same service name, same port, same API key handling.
+# Differences are confined to the engine flags - see README.md.
+services:
+  qwen:
+    image: ${SGLANG_IMAGE}          # replace with the @sha256 digest from download-models.sh
+    container_name: qwen-cpu
+    restart: unless-stopped
+    ipc: host
+    shm_size: 8g
+    ports: ["30000:30000"]
+    volumes: ["${HF_HOME}:/root/.cache/huggingface"]
+    environment:
+      OMP_NUM_THREADS: ${OMP_NUM_THREADS:-6}
+    command: >
+      sglang serve
+      --model-path ${MODEL_PATH}
+      --served-model-name ${SERVED_NAME}
+      --device cpu
+      --tp 1
+      --disable-overlap-schedule
+      --trust-remote-code
+      --context-length ${CONTEXT_LENGTH}
+      --max-running-requests ${MAX_RUNNING}
+      --reasoning-parser qwen3
+      --enable-metrics
+      --api-key ${API_KEY}
+      --host 0.0.0.0 --port 30000
