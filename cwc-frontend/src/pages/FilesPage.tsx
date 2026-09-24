@@ -89,6 +89,7 @@ function FolderCard({ folder, top = false }: { folder: StorageFolder; top?: bool
                 <tr>
                   <th>File on disk</th>
                   <th>Arrived as</th>
+                  <th>Type</th>
                   <th>Size</th>
                   <th>Modified</th>
                   <th />
@@ -124,6 +125,7 @@ function FileRow({ file }: { file: StorageFile }) {
             gap between that and the filed name is the AI's contribution. */}
         {file.originalFileName ?? <span className="muted">— not known to the app —</span>}
       </td>
+      <td className="muted">{file.category ?? '—'}</td>
       <td>{formatBytes(file.sizeBytes)}</td>
       <td className="muted">{relativeTime(file.modifiedAt)}</td>
       <td className="row-actions">

@@ -2,6 +2,7 @@ package ai.avenirdigital.cwc.controller;
 
 import ai.avenirdigital.cwc.model.FaxDocumentEntity;
 import ai.avenirdigital.cwc.model.RoutingDecisionEntity;
+import ai.avenirdigital.cwc.repository.ClassificationResultRepository;
 import ai.avenirdigital.cwc.repository.FaxDocumentRepository;
 import ai.avenirdigital.cwc.repository.RoutingDecisionRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +44,9 @@ public class StorageBrowseController {
     /** Guard against walking a huge tree and returning an unusable payload. */
     private static final int MAX_FILES_PER_FOLDER = 500;
 
-    private final FaxDocumentRepository     faxRepo;
-    private final RoutingDecisionRepository routingRepo;
+    private final FaxDocumentRepository          faxRepo;
+    private final RoutingDecisionRepository      routingRepo;
+    private final ClassificationResultRepository classificationRepo;
 
     @Value("${cwc.storage.base-path:/data}")
     private String basePath;
@@ -113,14 +115,20 @@ public class StorageBrowseController {
             }
         }
 
+        // Category per document, so a filed file can say what it was judged to
+        // be without a query per row.
+        Map<Long, String> categoryByDoc = new HashMap<>();
+        classificationRepo.findAll().forEach(cr ->
+                categoryByDoc.put(cr.getFaxDocumentId(), cr.getDetectedCategory()));
+
         List<FolderEntry> roots = new ArrayList<>();
 
         Path inbound = (inboundPath == null || inboundPath.isBlank())
                 ? base.resolve("Inbound")
                 : Paths.get(inboundPath).toAbsolutePath().normalize();
-        roots.add(walk(inbound, "Inbound", byPath, 1, warnings));
-        roots.add(walk(base.resolve(incomingDir), "Working (incoming)", byPath, 0, warnings));
-        roots.add(walk(base.resolve(routedDir),  "Outbound (filed)",    byPath, 1, warnings));
+        roots.add(walk(inbound, "Inbound", byPath, categoryByDoc, 1, warnings));
+        roots.add(walk(base.resolve(incomingDir), "Working (incoming)", byPath, categoryByDoc, 0, warnings));
+        roots.add(walk(base.resolve(routedDir),  "Outbound (filed)",    byPath, categoryByDoc, 1, warnings));
 
         return new BrowseResponse(
                 base.toString(),
@@ -138,6 +146,7 @@ public class StorageBrowseController {
      */
     private FolderEntry walk(Path dir, String label,
                              Map<String, FaxDocumentEntity> byPath,
+                             Map<Long, String> categoryByDoc,
                              int depth, List<String> warnings) {
 
         List<FileEntry>   files   = new ArrayList<>();
@@ -154,10 +163,12 @@ public class StorageBrowseController {
             for (Path p : stream) {
                 if (Files.isDirectory(p)) {
                     if (depth > 0) {
-                        folders.add(walk(p, p.getFileName().toString(), byPath, depth - 1, warnings));
+                        folders.add(walk(p, p.getFileName().toString(), byPath, categoryByDoc, depth - 1, warnings));
                     }
                     continue;
                 }
+                // Hidden files are operator scratch (.wtest, .DS_Store), never faxes.
+                if (p.getFileName().toString().startsWith(".")) continue;
                 if (files.size() >= MAX_FILES_PER_FOLDER) { truncated = true; continue; }
 
                 BasicFileAttributes a = Files.readAttributes(p, BasicFileAttributes.class);
@@ -171,7 +182,7 @@ public class StorageBrowseController {
                                .atZone(ZoneId.systemDefault()).toOffsetDateTime().toString(),
                         doc == null ? null : doc.getTrackingId().toString(),
                         doc == null ? null : doc.getOriginalFileName(),
-                        null
+                        doc == null ? null : categoryByDoc.get(doc.getId())
                 ));
                 total += a.size();
             }
