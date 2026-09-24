@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Run the LOCAL (laptop) application stack against the REMOTE model gateway
+# on the AWS VM. No model runs on the laptop.
+#
+#   docker compose -f docker-compose.yml -f aws-rehearsal/compose.remote-llm.yml up -d
+#
+# Requires, in the ROOT .env on the laptop:
+#   REMOTE_LLM_URL=https://<vm-ip>/v1
+#   CLIENT_KEY=<per-caller key from the gateway>
+#   REMOTE_LLM_CERT=C:/cwc/llm.crt     (the gateway's certificate, copied down)
+#   SERVED_NAME=qwen-base
+#
+# The gateway certificate must list the VM's IP in its subjectAltName, or TLS
+# verification fails. See REHEARSAL_RESULTS.md.
+#
+# NOTE: fax page images travel from the laptop to the VM over the internet.
+# Synthetic or de-identified documents only.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+
+  # No local model container - the remote gateway serves one.
+  llm:
+    profiles: ["unused"]
+
+  ai:
+    depends_on: !reset []
+    networks: !override [internal, edge]      # edge gives it a route out to the VM
+    environment:
+      LLM_PROVIDER: openai
+      OPENAI_BASE_URL: ${REMOTE_LLM_URL:?Set REMOTE_LLM_URL in the root .env}
+      OPENAI_API_KEY: ${CLIENT_KEY:?Set CLIENT_KEY in the root .env}
+      OPENAI_MODEL: ${SERVED_NAME:-qwen-base}
+      ANTHROPIC_API_KEY: ""
+      SSL_CERT_FILE: /etc/ssl/llm/llm.crt
+      REQUESTS_CA_BUNDLE: /etc/ssl/llm/llm.crt
+      CWC_MAX_RENDER_PAGES: "3"
+      CWC_LLM_TIMEOUT_SECS: "1800"            # remote CPU inference is slow
+      CWC_DEBUG_LOG_OCR_TEXT: "false"
+    volumes: !override
+      - ${CWC_DATA_DIR:-C:/CWC_DOCKER}:/data:ro
+      - ai-logs:/app/logs
+      - ${REMOTE_LLM_CERT:?Set REMOTE_LLM_CERT in the root .env}:/etc/ssl/llm/llm.crt:ro
+
+  backend:
+    environment:
+      CWC_LLM_TIMEOUT_SECS: "1800"
