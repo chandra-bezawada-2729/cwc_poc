@@ -13,6 +13,13 @@
 # variable comes out empty.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# The root compose file declares an external volume for the laptop's llama.cpp
+# setup. That service never starts here, but Compose still requires the volume
+# to exist. Creating it is harmless and keeps the deployment steps shorter.
+docker volume inspect local-llm_qwen-models >/dev/null 2>&1 \
+  || docker volume create local-llm_qwen-models >/dev/null
+
 exec docker compose \
   --env-file .env \
   --project-directory ../.. \
