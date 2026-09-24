@@ -5,6 +5,7 @@ import ReviewQueuePage from './pages/ReviewQueuePage'
 import FaxDetailPage from './pages/FaxDetailPage'
 import RoutingConfigPage from './pages/RoutingConfigPage'
 import AccuracyPage from './pages/AccuracyPage'
+import FilesPage from './pages/FilesPage'
 import { ingestApi, type IngestStatus } from './api/client'
 import ThemeToggle from './components/ThemeToggle'
 import './styles/tokens.css'
@@ -13,6 +14,7 @@ import './App.css'
 const NAV_LINKS = [
   { to: '/inbox',    label: 'Inbox' },
   { to: '/review',   label: 'Review Queue' },
+  { to: '/files',    label: 'Folders' },
   { to: '/routing',  label: 'Routing Config' },
   { to: '/accuracy', label: 'Accuracy' },
 ]
@@ -75,6 +77,7 @@ export default function App() {
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/review" element={<ReviewQueuePage />} />
           <Route path="/faxes/:trackingId" element={<FaxDetailPage />} />
+          <Route path="/files" element={<FilesPage />} />
           <Route path="/routing" element={<RoutingConfigPage />} />
           <Route path="/accuracy" element={<AccuracyPage />} />
         </Routes>

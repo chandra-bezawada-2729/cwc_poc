@@ -7,6 +7,7 @@ import {
 import StatusBadge from '../components/StatusBadge';
 import ProvenanceGlyph from '../components/ProvenanceGlyph';
 import RoutingSuggestionCard from '../components/RoutingSuggestionCard';
+import FeedbackWidget from '../components/FeedbackWidget';
 
 /**
  * One label/value pair in a definition grid.
@@ -660,6 +661,8 @@ export default function FaxDetailPage() {
           </div>
         </div>
       )}
+
+      <FeedbackWidget trackingId={trackingId!} />
     </div>
   );
 }

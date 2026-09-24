@@ -97,3 +97,7 @@ deploy/cbwchc/keys/
 deploy/cbwchc/conf.d/
 deploy/cbwchc/tls/*.key
 deploy/cbwchc/tls/*.crt
+
+# Reviewer feedback exports contain free text about patient documents
+deploy/cbwchc/feedback-exports/
+feedback-exports/

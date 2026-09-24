@@ -196,6 +196,63 @@ export interface ConfirmRequest {
   decidedBy?: string;
 }
 
+// ── Reviewer feedback ────────────────────────────────────────────────────────
+
+export type Verdict = 'UP' | 'DOWN';
+
+export interface Feedback {
+  trackingId: string;
+  verdict: Verdict;
+  /** Only present for DOWN: what went wrong, in the reviewer's words. */
+  summary: string | null;
+  /** What the AI decided, as it stood when the feedback was given. */
+  originalFileName: string | null;
+  aiFileName: string | null;
+  aiFolder: string | null;
+  aiCategory: string | null;
+  aiSubtype: string | null;
+  aiConfidence: number | null;
+  reviewState: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface FeedbackList {
+  total: number;
+  upCount: number;
+  downCount: number;
+  items: Feedback[];
+}
+
+// ── Folder contents on the server ────────────────────────────────────────────
+
+export interface StorageFile {
+  name: string;
+  sizeBytes: number;
+  modifiedAt: string;
+  /** Set when this file is one the application filed; null when it is not. */
+  trackingId: string | null;
+  originalFileName: string | null;
+  category: string | null;
+}
+
+export interface StorageFolder {
+  name: string;
+  path: string;
+  fileCount: number;
+  totalBytes: number;
+  files: StorageFile[];
+  folders: StorageFolder[];
+  truncated: boolean;
+}
+
+export interface StorageBrowse {
+  basePath: string;
+  generatedAt: string;
+  roots: StorageFolder[];
+  warnings: string[];
+}
+
 // ── API client ───────────────────────────────────────────────────────────────
 
 export const faxApi = {
@@ -435,3 +492,46 @@ export function confidencePct(score: number | null): string {
   if (score == null) return '—';
   return `${Math.round(score * 100)}%`;
 }
+
+export const feedbackApi = {
+  async get(trackingId: string): Promise<Feedback | null> {
+    const res = await fetch(`${BASE}/faxes/${trackingId}/feedback`);
+    // 204 means nobody has judged this fax yet, which is not an error.
+    if (res.status === 204) return null;
+    if (!res.ok) throw new Error(`Failed to load feedback: ${res.status}`);
+    return res.json();
+  },
+
+  async submit(trackingId: string, verdict: Verdict, summary?: string): Promise<Feedback> {
+    const res = await fetch(`${BASE}/faxes/${trackingId}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verdict, summary: summary ?? null }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error ?? `Failed to save feedback: ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async list(verdict?: Verdict): Promise<FeedbackList> {
+    const qs = verdict ? `?verdict=${verdict}` : '';
+    const res = await fetch(`${BASE}/feedback${qs}`);
+    if (!res.ok) throw new Error(`Failed to load feedback: ${res.status}`);
+    return res.json();
+  },
+
+  /** The browser downloads the file; nothing to parse here. */
+  csvUrl(verdict?: Verdict): string {
+    return `${BASE}/feedback/export.csv${verdict ? `?verdict=${verdict}` : ''}`;
+  },
+};
+
+export const storageApi = {
+  async browse(): Promise<StorageBrowse> {
+    const res = await fetch(`${BASE}/storage/browse`);
+    if (!res.ok) throw new Error(`Failed to read folders: ${res.status}`);
+    return res.json();
+  },
+};

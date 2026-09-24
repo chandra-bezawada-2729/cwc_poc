@@ -206,3 +206,111 @@ body { background: var(--ground); color: var(--ink); }
   .content { margin-left: 0; padding: 16px; }
   .detail-rail { flex-basis: 100%; }
 }
+
+/* ── Folders page and reviewer feedback ──────────────────────────────────────
+   Both were added after the original pages, so they carry their own classes
+   rather than reusing names that did not exist. Everything below is built from
+   the shared tokens, so it follows the theme like the rest of the app. */
+
+.page { padding: 24px 28px 48px; max-width: 1200px; }
+
+.page-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; margin-bottom: 20px;
+}
+.page-head h1 { font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin: 0; }
+
+.muted { color: var(--ink-3); }
+.small { font-size: 12px; }
+.mono  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+
+.link {
+  color: var(--accent); text-decoration: none; font-size: 12.5px; white-space: nowrap;
+}
+.link:hover { text-decoration: underline; }
+
+.btn {
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer;
+  box-shadow: var(--lift);
+}
+.btn:hover:not(:disabled) { background: var(--surface-3); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-2); }
+.btn.primary:hover:not(:disabled) { background: var(--accent-line); color: var(--ink); }
+
+.alert {
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
+  font-size: 13px; border: 1px solid var(--line);
+}
+.alert.error { background: var(--crit-soft); border-color: var(--crit); color: var(--ink); }
+.alert.warn  { background: var(--warn-soft); border-color: var(--warn); color: var(--ink); }
+.error-text  { color: var(--crit); font-size: 12.5px; margin-top: 8px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;
+  box-shadow: var(--lift);
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px;
+}
+.card-head h3 { font-size: 14px; font-weight: 600; margin: 0; }
+
+/* Folder tree */
+.folder-card    { margin-bottom: 14px; }
+.folder-top     { border-color: var(--line); background: var(--surface); }
+.folder-card .folder-card { background: var(--surface-2); margin: 10px 0 0; padding: 12px 14px; }
+.folder-head    { cursor: pointer; user-select: none; }
+.folder-caret   { color: var(--ink-3); margin-right: 8px; font-size: 11px; }
+.folder-path    { margin: -4px 0 10px; word-break: break-all; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th {
+  text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-3);
+  padding: 8px 10px; border-bottom: 1px solid var(--line);
+}
+.table td { padding: 9px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.table tr:last-child td { border-bottom: none; }
+.files-table td:first-child { max-width: 380px; word-break: break-all; }
+.row-actions { text-align: right; white-space: nowrap; }
+.row-actions .link + .link { margin-left: 12px; }
+
+/* Feedback */
+.feedback-card   { margin-top: 20px; }
+.feedback-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.feedback-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface-2); color: var(--ink-2);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 8px 16px; font-size: 13px; cursor: pointer;
+}
+.feedback-btn:hover:not(:disabled) { background: var(--surface-3); color: var(--ink); }
+.feedback-btn:disabled { opacity: .5; cursor: default; }
+.feedback-btn.is-selected.up {
+  background: var(--ok-soft); border-color: var(--ok); color: var(--ok);
+}
+.feedback-btn.is-selected.down {
+  background: var(--crit-soft); border-color: var(--crit); color: var(--crit);
+}
+
+.feedback-form { margin-top: 14px; }
+.feedback-form label { display: block; font-size: 12.5px; color: var(--ink-2); margin-bottom: 6px; }
+.feedback-form textarea {
+  width: 100%; background: var(--ground); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px; font-size: 13px; font-family: inherit; line-height: 1.5;
+  resize: vertical;
+}
+.feedback-form textarea:focus { outline: none; border-color: var(--accent-line); }
+.feedback-form-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+.feedback-summary {
+  margin: 14px 0 0; padding: 10px 14px;
+  border-left: 3px solid var(--crit); background: var(--surface-2);
+  border-radius: 0 8px 8px 0; font-size: 13px; color: var(--ink-2);
+  white-space: pre-wrap;
+}
