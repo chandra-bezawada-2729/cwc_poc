@@ -1,7 +1,13 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # The fax application, running against the model gateway.
 #
-#   docker compose -f ../../docker-compose.yml -f compose.app.yml up -d --build
+#   cd /opt/cwc/deploy/cbwchc
+#   docker compose --env-file .env --project-directory ../.. \
+#     -f ../../docker-compose.yml -f compose.app.yml up -d --build
+#
+# --env-file and --project-directory are BOTH required. Without them
+# Compose looks for .env beside the first compose file (the repo root),
+# not in this folder, and every variable comes out empty.
 #
 # The application never receives the engine key and has no knowledge of which
 # model or engine is behind the endpoint — which is what allows the model to be
@@ -30,7 +36,7 @@ services:
     volumes: !override
       - ${DATA_DIR:-/srv/cwc-data}:/data:ro
       - ai-logs:/app/logs
-      - ./tls/llm.crt:/etc/ssl/llm/llm.crt:ro
+      - ${TLS_CERT:?Set TLS_CERT in .env - absolute path to tls/llm.crt}:/etc/ssl/llm/llm.crt:ro
 
   backend:
     environment:
