@@ -42,11 +42,13 @@ services:
       - ${CWC_DATA_DIR:-/srv/cwc-data}:/data
 
   web:
-    # Bound to all interfaces, not 127.0.0.1: this is the "reachable by staff
-    # on the network" case. What limits access is the firewall in front (the
-    # AWS security group here; CBWCHC's network rules at the client).
+    # Bound to all interfaces, not 127.0.0.1: reachable by both teams.
+    # Access is controlled by HTTP basic auth (see cwc-frontend/nginx.conf)
+    # plus whatever the firewall in front allows.
     ports: !override
       - "0.0.0.0:${WEB_PORT:-8088}:80"
+    volumes:
+      - ${WEB_HTPASSWD:?Set WEB_HTPASSWD - path to the .htpasswd file}:/etc/nginx/.htpasswd:ro
 
 networks:
   # The gateway's external-facing network, created by compose.cpu.yml.
