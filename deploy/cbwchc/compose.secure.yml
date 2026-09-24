@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Isolation + HTTPS gateway. Applied AFTER the correctness check passes:
+# once this is on, the model port is no longer reachable directly.
+#
+#   docker compose -f compose.model.yml -f compose.secure.yml up -d
+#
+# Requires Docker Compose 2.24.4+ for !reset and !override.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  model:
+    ports: !reset []                       # not reachable from the network
+    networks: !override [llm_internal]     # no route out: no telemetry, no URL fetches
+    environment:
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      DO_NOT_TRACK: "1"
+    logging:
+      driver: json-file
+      options: {max-size: "50m", max-file: "5"}
+
+  gateway:
+    image: nginx:stable-alpine
+    container_name: cwc-gateway
+    restart: unless-stopped
+    depends_on: [model]
+    ports: ["443:443"]
+    networks:
+      llm_internal:
+        aliases: [llm.internal]            # matches the TLS certificate
+      edge: {}
+    environment:
+      API_KEY: ${API_KEY}
+    volumes:
+      - ./conf.d:/etc/nginx/conf.d:ro      # written by render-gateway-config.sh
+      - ./tls:/etc/nginx/tls:ro
+      - /var/log/llm-audit:/var/log/nginx
+
+networks:
+  llm_internal:
+    internal: true
+  edge: {}

@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# The fax application, running against the model gateway.
+#
+#   docker compose -f ../../docker-compose.yml -f compose.app.yml up -d --build
+#
+# The application never receives the engine key and has no knowledge of which
+# model or engine is behind the endpoint — which is what allows the model to be
+# changed or moved later without touching the application.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+
+  # No model container here: the gateway already serves one.
+  llm:
+    profiles: ["unused"]
+
+  ai:
+    depends_on: !reset []
+    networks: !override [internal, llmnet]
+    environment:
+      LLM_PROVIDER: openai
+      OPENAI_BASE_URL: https://llm.internal/v1
+      OPENAI_API_KEY: ${CALLER_KEY:?Set CALLER_KEY - the cwc-ai-service key from keys/callers.txt}
+      OPENAI_MODEL: ${SERVED_NAME:-qwen3.8-27b}
+      ANTHROPIC_API_KEY: ""
+      SSL_CERT_FILE: /etc/ssl/llm/llm.crt
+      REQUESTS_CA_BUNDLE: /etc/ssl/llm/llm.crt
+      CWC_MAX_RENDER_PAGES: "3"
+      CWC_LLM_TIMEOUT_SECS: "1800"
+      CWC_DEBUG_LOG_OCR_TEXT: "false"
+    volumes: !override
+      - ${DATA_DIR:-/srv/cwc-data}:/data:ro
+      - ai-logs:/app/logs
+      - ./tls/llm.crt:/etc/ssl/llm/llm.crt:ro
+
+  backend:
+    environment:
+      CWC_LLM_TIMEOUT_SECS: "1800"
+    volumes: !override
+      - ${DATA_DIR:-/srv/cwc-data}:/data
+
+  web:
+    # Bound to all interfaces so staff desktops can reach it. Access is
+    # controlled by the shared password below plus the CBWCHC firewall rule.
+    ports: !override
+      - "0.0.0.0:${WEB_PORT:-8088}:80"
+    volumes:
+      - ${WEB_HTPASSWD:?Set WEB_HTPASSWD - path to the .htpasswd file}:/etc/nginx/.htpasswd:ro
+
+networks:
+  llmnet:
+    external: true
+    name: cwc-llm_edge

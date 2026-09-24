@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Model server — Qwen3.8-27B with the DFlash2 draft model, on SGLang.
+#
+# There is NO Dockerfile here. The model server is a pre-built image pulled
+# from Docker Hub; only the values in .env change between environments.
+#
+#   docker compose -f compose.model.yml up -d
+#   docker logs -f cwc-model        # ~9 minutes on first start
+# ─────────────────────────────────────────────────────────────────────────────
+name: cwc-llm
+
+services:
+  model:
+    image: ${SGLANG_IMAGE:?Set SGLANG_IMAGE in .env - use the @sha256 digest}
+    container_name: cwc-model
+    restart: unless-stopped
+    ipc: host
+    shm_size: 32g
+    mem_limit: 100g          # stops a runaway taking the host down
+    memswap_limit: 100g      # (GPU memory is NOT covered by this - see MEM_FRACTION)
+    ports: ["127.0.0.1:30000:30000"]
+    environment:
+      DO_NOT_TRACK: "1"
+    volumes:
+      - ${HF_HOME:?Set HF_HOME in .env}:/root/.cache/huggingface
+    command: >
+      sglang serve
+      --model-path ${MODEL_PATH:?Set MODEL_PATH in .env}
+      --served-model-name ${SERVED_NAME:-qwen3.8-27b}
+      --trust-remote-code
+      --kv-cache-dtype fp8_e4m3
+      --mem-fraction-static ${MEM_FRACTION:-0.50}
+      --context-length ${CONTEXT_LENGTH:-262144}
+      --attention-backend flashinfer
+      --chunked-prefill-size 8192
+      --disable-prefill-cuda-graph
+      --cuda-graph-max-bs 8
+      --disable-flashinfer-autotune
+      --speculative-algorithm DFLASH
+      --speculative-draft-model-path ${DRAFT_MODEL_PATH:?Set DRAFT_MODEL_PATH in .env}
+      --speculative-num-draft-tokens ${DRAFT_TOKENS:-8}
+      --speculative-draft-model-quantization unquant
+      --mamba-radix-cache-strategy extra_buffer
+      --mamba-ssm-dtype bfloat16
+      --max-running-requests ${MAX_RUNNING:-8}
+      --max-mamba-cache-size ${MAX_MAMBA_CACHE:-96}
+      --enable-torch-compile --torch-compile-max-bs 4
+      --num-continuous-decode-steps 2
+      --sleep-on-idle
+      --reasoning-parser qwen3
+      --tool-call-parser qwen3_coder
+      --enable-metrics
+      --api-key ${API_KEY:?Set API_KEY in .env}
+      --host 0.0.0.0 --port 30000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:30000/health',timeout=5).status==200 else 1)"]
+      interval: 20s
+      timeout: 10s
+      retries: 60
+      start_period: 900s      # first start compiles and captures graphs
+
+networks:
+  default:
+    name: cwc_llm_internal

@@ -1,0 +1,48 @@
+# Gateway configuration TEMPLATE. Do not edit the rendered file directly —
+# render-gateway-config.sh regenerates it from keys/callers.txt.
+#
+# CORRECTION 1 (found during rehearsal): these two lines are mandatory.
+# Caller keys are 64 hex characters, longer than nginx's default 64-byte map
+# hash bucket. Without them nginx exits with "could not build map_hash", and
+# the message gives no hint that key length is the cause.
+map_hash_bucket_size 128;
+map_hash_max_size   2048;
+
+# OpenAI clients send "Authorization: Bearer <key>"; Anthropic clients send
+# "x-api-key: <key>". Accept both and resolve to one caller identity.
+map $http_authorization $bearer_key { default ""; "~^Bearer\s+(?<k>\S+)$" $k; }
+map $bearer_key $client_key { "" $http_x_api_key; default $bearer_key; }
+
+map $client_key $llm_user {
+    default "";
+__CALLER_KEYS__
+}
+
+log_format llm_audit escape=json
+  '{"time":"$time_iso8601","user":"$llm_user","ip":"$remote_addr",'
+  '"method":"$request_method","path":"$uri","status":"$status",'
+  '"in_bytes":$request_length,"out_bytes":$bytes_sent,"secs":$request_time}';
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name llm.internal;
+    ssl_certificate     /etc/nginx/tls/llm.crt;
+    ssl_certificate_key /etc/nginx/tls/llm.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # Who, when, what — never request content.
+    access_log /var/log/nginx/llm-audit.log llm_audit;
+    client_max_body_size 64m;          # base64 page images travel in the body
+
+    location ~ ^/v1/ {
+        if ($llm_user = "") { return 401; }
+        proxy_set_header Authorization "Bearer ${API_KEY}";   # engine key never leaves the box
+        proxy_set_header X-Api-Key "";
+        proxy_pass http://model:30000;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+    }
+    location / { return 404; }         # /metrics and everything else stays internal
+}

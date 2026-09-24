@@ -90,3 +90,10 @@ Claude outputs/
 
 # Release packages built by deploy/windows/build-release.ps1
 release/
+
+# ── CBWCHC deployment package: secrets and rendered config ──
+deploy/cbwchc/.env
+deploy/cbwchc/keys/
+deploy/cbwchc/conf.d/
+deploy/cbwchc/tls/*.key
+deploy/cbwchc/tls/*.crt
