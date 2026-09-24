@@ -55,4 +55,7 @@ services:
 networks:
   llmnet:
     external: true
-    name: cwc-llm_edge
+    # The gateway's edge network, created by compose.secure.yml. Configurable
+    # so the application can be pointed at an existing gateway without editing
+    # this file (used when validating the package against a test gateway).
+    name: ${LLM_NETWORK:-cwc-llm_edge}
