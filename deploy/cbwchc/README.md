@@ -42,7 +42,8 @@ with a missing-variable error that does not say why.
 ## Corrections carried from the rehearsal
 
 This package was built after executing the vendor guide end to end on a Linux
-server. Five defects were found; all are corrected here.
+server. Four defects were found in the vendor guide and one was introduced by
+this package's own repackaging; all five are corrected here.
 
 1. **`map_hash_bucket_size`** — without it nginx refuses to start, with an error
    that does not indicate the cause. Fixed in `templates/llm.conf.template`.
@@ -51,10 +52,13 @@ server. Five defects were found; all are corrected here.
    Keys now live in `keys/callers.txt`, outside source control.
 3. **Fax folder ownership** — the containers run as UID 10001, not the host
    user. Without it the scanner fails silently. See the runbook, Phase 4.
-4. **Model directory not created** — `HF_HOME` points under `/opt`, which is
-   root-owned. The download failed on a permission error after the CLI install.
-   `download-models.sh` now creates it, takes ownership, and checks free disk
-   before starting a 42 GB transfer.
+4. **Model directory not created by this package.** The vendor guide creates
+   `/opt/models/hf` in its own step 1, which also sets up `/opt/qwen-spark`.
+   This package replaces that step with a `git clone`, so nothing created the
+   cache directory — `/opt` is root-owned and the download would have failed on
+   a permission error after the CLI install. `download-models.sh` now creates
+   it, takes ownership, and checks for the 85 GB the guide requires before
+   starting a 42 GB transfer. This one is ours, not the vendor's.
 5. **Ambiguous correctness check** — a model too small fails identically every
    time, which looks like an engine fault. Always follow a failure with a single
    isolated request. See the header of `correctness-check.sh`.

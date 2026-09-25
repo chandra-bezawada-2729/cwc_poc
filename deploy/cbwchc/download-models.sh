@@ -33,7 +33,7 @@ fi
 [[ -w "$HF_HOME" ]] || { echo "ERROR: $HF_HOME is not writable by $(whoami)" >&2; exit 1; }
 
 # 42 GB of downloads plus extracted image layers. Find out now, not at 90%.
-need_gb=80
+need_gb=85   # the vendor guide states ~85 GB free
 have_gb=$(df -BG --output=avail "$HF_HOME" | tail -1 | tr -dc '0-9')
 docker_gb=$(df -BG --output=avail /var/lib/docker 2>/dev/null | tail -1 | tr -dc '0-9' || echo 0)
 echo "==> disk: ${have_gb}G free on $HF_HOME, ${docker_gb}G free for docker images"
