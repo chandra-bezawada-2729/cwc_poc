@@ -20,20 +20,29 @@ that already exist in this repository and do not change.
 | `render-gateway-config.sh` | Inserts caller keys into the configuration at deploy time. |
 | `correctness-check.sh` | 40 requests in batches of 8. Must report 0 wrong. |
 | `compose.app.yml` | The fax application, pointed at the gateway. |
+| `app.sh` | Wrapper for the application stack. Use this, never a raw `docker compose`. |
+| `export-feedback.sh` | Dumps the thumbs-up/down records and their summaries to CSV. |
 
 ## Order
 
+    cp .env.example .env && chmod 600 .env                  # first, or nothing runs
     ./download-models.sh                                    # before the session
     docker compose -f compose.model.yml up -d               # ~9 min first start
     ./correctness-check.sh                                  # 0 wrong out of 40
     ./render-gateway-config.sh
     docker compose -f compose.model.yml -f compose.secure.yml up -d
-    docker compose -f ../../docker-compose.yml -f compose.app.yml up -d --build
+    ./app.sh up -d --build                                  # the application
+
+The last step uses `app.sh`, not a raw `docker compose`. The application's
+compose file lives at the repository root while its overrides live here, so the
+project directory and the `.env` location both have to be set explicitly.
+`app.sh` does that; typing the compose command by hand does not, and it fails
+with a missing-variable error that does not say why.
 
 ## Corrections carried from the rehearsal
 
 This package was built after executing the vendor guide end to end on a Linux
-server. Four defects were found; all are corrected here.
+server. Five defects were found; all are corrected here.
 
 1. **`map_hash_bucket_size`** — without it nginx refuses to start, with an error
    that does not indicate the cause. Fixed in `templates/llm.conf.template`.
@@ -42,7 +51,11 @@ server. Four defects were found; all are corrected here.
    Keys now live in `keys/callers.txt`, outside source control.
 3. **Fax folder ownership** — the containers run as UID 10001, not the host
    user. Without it the scanner fails silently. See the runbook, Phase 4.
-4. **Ambiguous correctness check** — a model too small fails identically every
+4. **Model directory not created** — `HF_HOME` points under `/opt`, which is
+   root-owned. The download failed on a permission error after the CLI install.
+   `download-models.sh` now creates it, takes ownership, and checks free disk
+   before starting a 42 GB transfer.
+5. **Ambiguous correctness check** — a model too small fails identically every
    time, which looks like an engine fault. Always follow a failure with a single
    isolated request. See the header of `correctness-check.sh`.
 
