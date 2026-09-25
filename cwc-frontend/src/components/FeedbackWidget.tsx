@@ -48,7 +48,10 @@ export default function FeedbackWidget(
 
   if (loading) return null
 
-  const verdict = current?.verdict ?? null
+  // What the buttons show is the choice in play, not only the saved one:
+  // opening the "something went wrong" form has to move the highlight off
+  // Correct straight away, or the two look selected at once.
+  const verdict = pending ?? current?.verdict ?? null
 
   return (
     <section className={compact ? 'feedback-inline' : 'card feedback-card'}>
@@ -121,7 +124,7 @@ export default function FeedbackWidget(
         </div>
       )}
 
-      {pending !== 'DOWN' && verdict === 'DOWN' && current?.summary && (
+      {pending !== 'DOWN' && current?.verdict === 'DOWN' && current?.summary && (
         <blockquote className="feedback-summary">{current.summary}</blockquote>
       )}
 
