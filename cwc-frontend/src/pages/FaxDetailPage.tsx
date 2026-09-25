@@ -530,7 +530,11 @@ export default function FaxDetailPage() {
             {fax.uploadSource === 'FOLDER_SCAN' ? ' · from the watched folder' : ' · uploaded by hand'}
           </p>
         </div>
-        <div className="page-header-aside">
+        {/* The verdict sits with the status, not at the foot of the page: it is
+            asked about the decision shown here, and at the bottom it was below
+            the fold on every fax with more than a couple of evidence lines. */}
+        <div className="page-header-aside detail-header-aside">
+          <FeedbackWidget trackingId={trackingId!} compact />
           <StatusBadge status={fax.processingStatus} errorReason={fax.errorReason} />
         </div>
       </div>
@@ -662,7 +666,6 @@ export default function FaxDetailPage() {
         </div>
       )}
 
-      <FeedbackWidget trackingId={trackingId!} />
     </div>
   );
 }

@@ -314,3 +314,35 @@ body { background: var(--ground); color: var(--ink); }
   border-radius: 0 8px 8px 0; font-size: 13px; color: var(--ink-2);
   white-space: pre-wrap;
 }
+
+/* Compact feedback, sitting in the page header beside the status badge.
+   Same component as the card form; only the chrome differs. The expanded
+   "what went wrong" box drops below the header rather than pushing the
+   status badge around, so the header height does not jump when it opens. */
+.detail-header-aside {
+  display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.feedback-inline {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+.feedback-inline-head h3 {
+  margin: 0; font-size: 12.5px; font-weight: 500; color: var(--ink-3);
+  white-space: nowrap;
+}
+.feedback-inline .feedback-btn { padding: 5px 12px; font-size: 12.5px; }
+
+/* Once open, the form needs the full width of the header column. */
+.feedback-inline .feedback-form {
+  flex-basis: 100%; margin-top: 4px; min-width: 320px;
+}
+.feedback-inline .feedback-summary { flex-basis: 100%; margin-top: 8px; }
+.feedback-inline .error-text       { flex-basis: 100%; text-align: right; }
+
+@media (max-width: 900px) {
+  .detail-header-aside { justify-content: flex-start; }
+  .feedback-inline     { justify-content: flex-start; }
+}

@@ -12,7 +12,9 @@ import { feedbackApi, relativeTime, type Feedback, type Verdict } from '../api/c
  * sentence telling you a cardiology consult went to Miscellaneous tells you
  * which routing rule to change.
  */
-export default function FeedbackWidget({ trackingId }: { trackingId: string }) {
+export default function FeedbackWidget(
+  { trackingId, compact = false }: { trackingId: string; compact?: boolean }
+) {
   const [current, setCurrent] = useState<Feedback | null>(null)
   const [loading, setLoading] = useState(true)
   const [pending, setPending] = useState<Verdict | null>(null)
@@ -49,10 +51,10 @@ export default function FeedbackWidget({ trackingId }: { trackingId: string }) {
   const verdict = current?.verdict ?? null
 
   return (
-    <section className="card feedback-card">
-      <header className="card-head">
+    <section className={compact ? 'feedback-inline' : 'card feedback-card'}>
+      <header className={compact ? 'feedback-inline-head' : 'card-head'}>
         <h3>Was this handled correctly?</h3>
-        {current && (
+        {current && !compact && (
           <span className="muted small">
             recorded {relativeTime(current.updatedAt ?? current.createdAt)}
           </span>
