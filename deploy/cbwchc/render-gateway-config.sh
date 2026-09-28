@@ -20,11 +20,24 @@ mkdir -p conf.d
 block=$(awk 'NF >= 2 { printf "    \"%s\" \"%s\";\n", $1, $2 }' "$KEYS")
 [ -n "$block" ] || { echo "$KEYS has no valid entries"; exit 1; }
 
-python3 - "$block" <<'PY'
+# The engine key must be substituted HERE. compose.secure.yml passes API_KEY
+# into the container as an environment variable, but the nginx image only runs
+# envsubst on /etc/nginx/templates/ - and this file is mounted straight into
+# /etc/nginx/conf.d/. Left unsubstituted, nginx reads ${API_KEY} as a variable
+# reference, fails with `unknown "api_key" variable`, and restart: unless-stopped
+# hides it as a crash loop. Every caller then gets a connection error.
+set -a; . ./.env; set +a
+: "${API_KEY:?API_KEY is not set in .env - the gateway cannot reach the engine}"
+
+python3 - "$block" "$API_KEY" <<'PY'
 import sys, pathlib
-block = sys.argv[1]
+block, api_key = sys.argv[1], sys.argv[2]
 tpl = pathlib.Path("templates/llm.conf.template").read_text()
-pathlib.Path("conf.d/llm.conf").write_text(tpl.replace("__CALLER_KEYS__", block))
+out = tpl.replace("__CALLER_KEYS__", block).replace("${API_KEY}", api_key)
+if "${" in out:
+    sys.exit("Unsubstituted placeholder left in the rendered config: " +
+             out[out.index("${"):out.index("${") + 40])
+pathlib.Path("conf.d/llm.conf").write_text(out)
 PY
 
 echo "conf.d/llm.conf written with $(wc -l < "$KEYS") caller(s):"

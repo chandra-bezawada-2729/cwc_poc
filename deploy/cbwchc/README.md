@@ -23,6 +23,7 @@ that already exist in this repository and do not change.
 | `compose.app.yml` | The fax application, pointed at the gateway. |
 | `app.sh` | Wrapper for the application stack. Use this, never a raw `docker compose`. |
 | `export-feedback.sh` | Dumps the thumbs-up/down records and their summaries to CSV. |
+| `reset-demo.sh` | Wipes the application back to empty for a fresh run. Leaves the model alone. |
 
 ## Order
 
@@ -44,8 +45,8 @@ with a missing-variable error that does not say why.
 ## Corrections carried from the rehearsal
 
 This package was built after executing the vendor guide end to end on a Linux
-server. Five defects were found in the vendor guide and one was introduced by this
-package's own repackaging; all six are corrected here. Defect 6 was confirmed
+server. Five defects were found in the vendor guide and three in this package's own
+files; all eight are corrected here. Defect 6 was confirmed
 on the client's own hardware before the session.
 
 1. **`map_hash_bucket_size`** — without it nginx refuses to start, with an error
@@ -88,6 +89,32 @@ on the client's own hardware before the session.
        docker run --rm --gpus all ubuntu nvidia-smi
 
    `preflight.sh` detects this and prints the fix.
+
+7. **The engine key was never substituted into the gateway config.** The
+   template carries `${API_KEY}` and `compose.secure.yml` passes `API_KEY` into
+   the container, but the nginx image only runs envsubst on
+   `/etc/nginx/templates/` — and the rendered file is mounted into
+   `/etc/nginx/conf.d/`. nginx read `${API_KEY}` as a variable reference and
+   exited with:
+
+       nginx: [emerg] unknown "api_key" variable
+
+   `restart: unless-stopped` then turned that into a crash loop, so the gateway
+   showed as "Started" and `docker ps` had to be read carefully to see
+   `Restarting`. Every classification failed with a bare "Connection error"
+   pointing at nothing. `render-gateway-config.sh` now substitutes the key at
+   render time and aborts if any placeholder is left.
+
+   Confirmed on the client's hardware. The rehearsal did not catch it: that
+   deployment mounted the file where envsubst could reach it.
+
+8. **A stale shell overrides `.env`.** Docker Compose gives the shell
+   environment priority over `--env-file`. A shell that sourced `.env` before a
+   value was filled in keeps the old, empty value, and Compose reports the
+   variable as missing while the file plainly contains it. It bit `API_KEY` and
+   `CWC_DB_PASSWORD`, and would silently have deployed the wrong engine image
+   via `SGLANG_IMAGE`. **After editing `.env`, re-run `set -a; source .env;
+   set +a` in every open shell.**
 
 ## Never commit
 

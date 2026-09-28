@@ -101,3 +101,11 @@ deploy/cbwchc/tls/*.crt
 # Reviewer feedback exports contain free text about patient documents
 deploy/cbwchc/feedback-exports/
 feedback-exports/
+
+# Backup copies of env files. These have carried live credentials before and
+# this repository is public - never offer them for commit.
+.env.bak*
+*/.env.bak*
+**/.env.bak*
+.env.*.bak
+*.env.bak
